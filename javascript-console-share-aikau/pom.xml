@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>javascript-console-share</artifactId>
-    <name>JavaScript Console - Share</name>
-    <description>Alfresco Share-Extras JavaScript Console - Share Module</description>
+    <artifactId>javascript-console-share-aikau</artifactId>
+    <name>JavaScript Console - Share (Aikau-variant)</name>
+    <description>Alfresco Share-Extras JavaScript Console - Share (Aikau-variant) Module</description>
     <packaging>amp</packaging>
 
     <parent>
@@ -11,6 +11,19 @@
         <artifactId>javascript-console</artifactId>
         <version>0.7.0-SNAPSHOT</version>
     </parent>
+    
+    <developers>
+        <developer>
+            <id>a.faust</id>
+            <name>Axel Faust</name>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <properties>
+                <twitter>twitter.com/ReluctantBird83</twitter>
+            </properties>
+        </developer>
+    </developers>
 
     <!--
        | SDK properties have sensible defaults in the SDK parent,

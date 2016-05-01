@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.fmaul</groupId>
     <artifactId>javascript-console</artifactId>
-    <version>0.6</version>
+    <version>0.7.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>JavaScript Console</name>
@@ -38,6 +38,17 @@
                 <twitter>twitter.com/fmaul</twitter>
             </properties>
         </developer>
+        <developer>
+            <id>j.goldhammer</id>
+            <name>Jens Goldhammer</name>
+            <organization>fme AG</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <properties>
+                <twitter>twitter.com/jensWR</twitter>
+            </properties>
+        </developer>
     </developers>
 
     <properties>
@@ -53,7 +64,9 @@
     <modules>
         <module>javascript-console-repo</module>
         <module>javascript-console-share</module>
+        <module>javascript-console-share-aikau</module>
     </modules>
+
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
