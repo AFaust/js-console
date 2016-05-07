@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<webscript>
+    <shortname>JavaScript Console Page</shortname>
+    <description>This WebScript defines the Aikau-ified JavaScript Console page - it should be accessible to Admins</description>
+    <url>/components/console/javascript-console-aikau</url>
+    <family>admin-console</family>
+</webscript>

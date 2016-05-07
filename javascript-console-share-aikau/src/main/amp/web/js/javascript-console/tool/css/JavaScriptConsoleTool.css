@@ -1,0 +1,11 @@
+.jsconsole-tool-JavaScriptConsoleTool {
+    .alfresco-layout-AlfTabContainer .alfresco-layout-AlfTabContainer__OuterTab > *:first-child {
+        margin-top: @standard-line-height / 2;
+    }
+    
+    > .consoleMenuBar,
+    > .inputContainer,
+    > .consoleButtons {
+        margin-bottom: @standard-line-height / 2;
+    }
+}
