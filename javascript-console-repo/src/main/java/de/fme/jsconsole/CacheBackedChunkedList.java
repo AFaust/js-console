@@ -10,7 +10,7 @@ import org.alfresco.util.Pair;
 
 /**
  * A simple list which transfers entries onto a backing cache in chunks of a defined size. This class is <b>not thread-safe</b>.
- * 
+ *
  * @author Axel Faust, <a href="http://www.prodyna.com">PRODYNA AG</a>
  */
 public class CacheBackedChunkedList<K extends Serializable, E extends Serializable> extends AbstractList<E>
@@ -70,7 +70,7 @@ public class CacheBackedChunkedList<K extends Serializable, E extends Serializab
             if (this.backingInMemoryList.size() >= this.chunkSize)
             {
                 final int nextChunk = this.lastChunkTransferred + 1;
-                final List<E> toTransfer = this.backingInMemoryList.subList(0, 5);
+                final List<E> toTransfer = this.backingInMemoryList.subList(0, this.chunkSize);
                 final List<E> arrToTransfer = new ArrayList<E>(toTransfer);
                 toTransfer.clear();
                 final Pair<K, Integer> chunkKey = new Pair<K, Integer>(this.primaryCacheKey, Integer.valueOf(nextChunk));
@@ -105,4 +105,14 @@ public class CacheBackedChunkedList<K extends Serializable, E extends Serializab
         this.lastChunkTransferred = -1;
     }
 
+    /**
+     * Commits any remaining, uncommitted log output to the backing cache.
+     */
+    public void commitToCache()
+    {
+        final int nextChunk = this.lastChunkTransferred + 1;
+        final List<E> arrToTransfer = new ArrayList<E>(this.backingInMemoryList);
+        final Pair<K, Integer> chunkKey = new Pair<K, Integer>(this.primaryCacheKey, Integer.valueOf(nextChunk));
+        this.backingCache.put(chunkKey, arrToTransfer);
+    }
 }

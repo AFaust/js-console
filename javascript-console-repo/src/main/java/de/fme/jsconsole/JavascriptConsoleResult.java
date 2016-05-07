@@ -29,22 +29,22 @@ public class JavascriptConsoleResult extends JavascriptConsoleResultBase {
 
 	private List<JsConsoleDump> dumpOutput;
 
-	public void setPrintOutput(List<String> printOutput) {
+	public void setPrintOutput(final List<String> printOutput) {
 		this.printOutput = printOutput;
 	}
-	
+
 	public List<String> getPrintOutput() {
 	    return this.printOutput;
 	}
 
-	public void writeJson(WebScriptResponse response) throws IOException {
+	public void writeJson(final WebScriptResponse response) throws IOException {
 		response.setContentEncoding("UTF-8");
 		response.setContentType(MimetypeMap.MIMETYPE_JSON);
 
 		try {
-			JSONObject jsonOutput = generateJsonOutput();
+			final JSONObject jsonOutput = this.generateJsonOutput();
 			response.getWriter().write(jsonOutput.toString());
-		} catch (JSONException e) {
+		} catch (final JSONException e) {
 			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR,
 					"Error writing json response.", e);
 		}
@@ -55,29 +55,29 @@ public class JavascriptConsoleResult extends JavascriptConsoleResultBase {
 	 * @throws JSONException
 	 */
 	public JSONObject generateJsonOutput() throws JSONException {
-		JSONObject jsonOutput = new JSONObject();
-		jsonOutput.put("renderedTemplate", getRenderedTemplate());
-		jsonOutput.put("printOutput", getPrintOutput());
+		final JSONObject jsonOutput = new JSONObject();
+		jsonOutput.put("renderedTemplate", this.getRenderedTemplate());
+		jsonOutput.put("printOutput", this.getPrintOutput());
 		jsonOutput.put("dumpOutput", this.dumpOutput);
-		jsonOutput.put("spaceNodeRef", getSpaceNodeRef());
-		jsonOutput.put("spacePath", getSpacePath());
+		jsonOutput.put("spaceNodeRef", this.getSpaceNodeRef());
+		jsonOutput.put("spacePath", this.getSpacePath());
 		jsonOutput.put("result", new JSONArray());
-		jsonOutput.put("scriptPerf", getScriptPerformance());
-		jsonOutput.put("freemarkerPerf", getFreemarkerPerformance());
-		jsonOutput.put("webscriptPerf", getWebscriptPerformance());
-		jsonOutput.put("scriptOffset", getScriptPerformance());
+		jsonOutput.put("scriptPerf", this.getScriptPerformance());
+		jsonOutput.put("freemarkerPerf", this.getFreemarkerPerformance());
+		jsonOutput.put("webscriptPerf", this.getWebscriptPerformance());
+		jsonOutput.put("scriptOffset", this.getScriptOffset());
 		return jsonOutput;
 	}
 
 	public boolean isStatusResponseSent() {
-		return statusResponseSent;
+		return this.statusResponseSent;
 	}
 
-	public void setStatusResponseSent(boolean statusResponseSent) {
+	public void setStatusResponseSent(final boolean statusResponseSent) {
 		this.statusResponseSent = statusResponseSent;
 	}
 
-	public void setDumpOutput(List<JsConsoleDump> dumpOutput) {
+	public void setDumpOutput(final List<JsConsoleDump> dumpOutput) {
 		this.dumpOutput = dumpOutput;
 	}
 

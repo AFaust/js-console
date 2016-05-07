@@ -36,8 +36,8 @@ public class JavascriptConsoleRequest {
 
 	public final String resultChannel;
 
-	private JavascriptConsoleRequest(String script, String template,
-            String spaceNodeRef, String transaction, String runas, String urlargs, String documentNodeRef, Integer dumpLimit, String resultChannel) {
+	private JavascriptConsoleRequest(final String script, final String template,
+            final String spaceNodeRef, final String transaction, final String runas, final String urlargs, final String documentNodeRef, final Integer dumpLimit, final String resultChannel) {
         super();
         this.script = script;
         this.template = template;
@@ -46,7 +46,7 @@ public class JavascriptConsoleRequest {
 		this.dumpLimit = dumpLimit;
         this.urlargs = parseQueryString(urlargs);
         this.transactionReadOnly = "readonly".equalsIgnoreCase(transaction);
-        this.useTransaction = transactionReadOnly || "readwrite".equalsIgnoreCase(transaction);
+        this.useTransaction = this.transactionReadOnly || "readwrite".equalsIgnoreCase(transaction);
         this.runas = runas;
         this.resultChannel = resultChannel;
     }
@@ -57,54 +57,53 @@ public class JavascriptConsoleRequest {
      * @param queryString
      * @return
      */
-    protected static Map<String, String> parseQueryString(String queryString) {
-        Map<String, String> map = new HashMap<String, String>();
+    protected static Map<String, String> parseQueryString(final String queryString) {
+        final Map<String, String> map = new HashMap<String, String>();
 
-        String[] parameters = queryString.split("&");
-        for(int i = 0; i < parameters.length; i++) {
-            String[] keyAndValue = parameters[i].split("=");
-            if(keyAndValue.length != 2) {
-                // "invalid url parameter " + parameters[i]);
-                continue;
+        if (queryString != null) {
+            final String[] parameters = queryString.split("&");
+            for(int i = 0; i < parameters.length; i++) {
+                final String[] keyAndValue = parameters[i].split("=");
+                if(keyAndValue.length != 2) {
+                    // "invalid url parameter " + parameters[i]);
+                    continue;
+                }
+                final String key = keyAndValue[0];
+                final String value = keyAndValue[1];
+                map.put(key, value);
             }
-            String key = keyAndValue[0];
-            String value = keyAndValue[1];
-            map.put(key, value);
         }
 
         return map;
     }
 
-	public static JavascriptConsoleRequest readJson(WebScriptRequest request) {
-		Content content = request.getContent();
+	public static JavascriptConsoleRequest readJson(final WebScriptRequest request) {
+		final Content content = request.getContent();
 
-		InputStreamReader br = new InputStreamReader(content.getInputStream(),
+		final InputStreamReader br = new InputStreamReader(content.getInputStream(),
 				Charset.forName("UTF-8"));
-		JSONTokener jsonTokener = new JSONTokener(br);
+		final JSONTokener jsonTokener = new JSONTokener(br);
 		try {
-			JSONObject jsonInput = new JSONObject(jsonTokener);
+			final JSONObject jsonInput = new JSONObject(jsonTokener);
 
-			String script = jsonInput.getString("script");
-			String template = jsonInput.getString("template");
-			String spaceNodeRef = jsonInput.getString("spaceNodeRef");
-			String transaction = jsonInput.getString("transaction");
-			String urlargs = jsonInput.getString("urlargs");
-			String documentNodeRef = jsonInput.getString("documentNodeRef");
+			final String script = jsonInput.has("script") ? jsonInput.getString("script") : null;
+			final String template = jsonInput.has("template") ? jsonInput.getString("template"): null;
+			final String spaceNodeRef = jsonInput.has("spaceNodeRef") ? jsonInput.getString("spaceNodeRef") : null;
+			final String transaction = jsonInput.has("transaction") ? jsonInput.getString("transaction") : null;
+			final String urlargs = jsonInput.has("urlargs") ? jsonInput.getString("urlargs"): null;
+			final String documentNodeRef = jsonInput.has("documentNodeRef") ? jsonInput.getString("documentNodeRef") : null;
+
 			int dumpLimit = DEFAULT_DUMP_LIMIT;
-			if(jsonInput.has("dumpLimit")){
+			if (jsonInput.has("dumpLimit")) {
 				dumpLimit = jsonInput.getInt("dumpLimit");
 			}
-			String logOutputChannel = jsonInput.has("printOutputChannel") ? jsonInput.getString("printOutputChannel") : null;
-			String resultChannel = jsonInput.has("resultChannel") ? jsonInput.getString("resultChannel") : null;
 
-			String runas = jsonInput.getString("runas");
-			if (runas == null) {
-				runas = "";
-			}
-			
+			final String resultChannel = jsonInput.has("resultChannel") ? jsonInput.getString("resultChannel") : null;
+			final String runas = jsonInput.has("runas") ? jsonInput.getString("runas") : null;
+
 			return new JavascriptConsoleRequest(script, template, spaceNodeRef, transaction, runas, urlargs, documentNodeRef, dumpLimit, resultChannel);
-			
-		} catch (JSONException e) {
+
+		} catch (final JSONException e) {
 			throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR,
 					"Error reading json request body.", e);
 		}
@@ -112,9 +111,9 @@ public class JavascriptConsoleRequest {
 
 	@Override
 	public String toString() {
-		return "JavascriptConsoleRequest [script=" + script + ", template=" + template + ", spaceNodeRef=" + spaceNodeRef
-				+ ", runas=" + runas + ", useTransaction=" + useTransaction + ", transactionReadOnly=" + transactionReadOnly
-				+ ", urlargs=" + urlargs + ", documentNodeRef=" + documentNodeRef + ", dumpLimit=" + dumpLimit + ", resultChannel=" + resultChannel + "]";
+		return "JavascriptConsoleRequest [script=" + this.script + ", template=" + this.template + ", spaceNodeRef=" + this.spaceNodeRef
+				+ ", runas=" + this.runas + ", useTransaction=" + this.useTransaction + ", transactionReadOnly=" + this.transactionReadOnly
+				+ ", urlargs=" + this.urlargs + ", documentNodeRef=" + this.documentNodeRef + ", dumpLimit=" + this.dumpLimit + ", resultChannel=" + this.resultChannel + "]";
 	}
 
 }
