@@ -47,8 +47,7 @@ define(
                                 name : 'legacyRepositoryConsole',
                                 label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.label',
                                 description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.description',
-                                supports : [ 'javascriptSource', 'freemarkerSource', 'consoleOutput', 'textOutput', 'htmlOutput',
-                                        'jsonOutput' ]
+                                supports : [ 'javascriptSource', 'freemarkerSource', 'consoleOutput', 'templateOutput' ]
                             }, false, false, payload.alfResponseScope || '');
                         },
 

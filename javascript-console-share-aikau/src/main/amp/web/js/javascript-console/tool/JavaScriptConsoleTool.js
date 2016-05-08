@@ -13,9 +13,10 @@
  */
 define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'alfresco/core/Core', 'alfresco/core/CoreWidgetProcessing',
         'alfresco/core/ResizeMixin', 'alfresco/core/ObjectProcessingMixin', 'jsconsole/_ConsoleTopicsMixin',
-        'dojo/text!./templates/JavaScriptConsoleTool.html', 'dojo/_base/lang', 'dojo/_base/array', 'dojo/dom-class' ], function(declare,
-        _Widget, _Templated, Core, CoreWidgetProcessing, ResizeMixin, ObjectProcessingMixin, _ConsoleTopicsMixin, template, lang, array,
-        domClass)
+        'dojo/text!./templates/JavaScriptConsoleTool.html', 'dojo/_base/lang', 'dojo/_base/array', 'dojo/dom-class', 'dojo/dom-style',
+        'dojo/dom-geometry', 'dojo/query', 'dojo/window', 'alfresco/util/functionUtils' ], function(declare, _Widget, _Templated, Core,
+        CoreWidgetProcessing, ResizeMixin, ObjectProcessingMixin, _ConsoleTopicsMixin, template, lang, array, domClass, domStyle, domGeom,
+        query, win, functionUtils)
 {
     return declare([ _Widget, _Templated, Core, CoreWidgetProcessing, ResizeMixin, ObjectProcessingMixin, _ConsoleTopicsMixin ], {
 
@@ -29,12 +30,14 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             i18nFile : './i18n/JavaScriptConsoleTool.properties'
         } ],
 
+        restrictToPageHeight : true,
+
         widgetsForDefaultMenuBar : [ {
             id : 'BACKEND_SELECTION',
             name : 'jsconsole/menu/CheckableBackendMenuBarPopup',
             config : {
                 label : 'jsconsole.tool.JavaScriptConsoleTool.menu.backends.label',
-                title : 'jsconsole.tool.JavaScriptConsoleTool.menu.backends.title',
+                title : 'jsconsole.tool.JavaScriptConsoleTool.menu.backends.title'
             }
         }
         // TODO CodeMirror theme selection
@@ -53,6 +56,17 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 autofocus : false,
                 updateContentTopic : '{updateJavaScriptSourceTopic}',
                 contentUpdatedTopic : '{javaScriptSourceUpdatedTopic}'
+            }
+        }, {
+            id : 'FTL-INPUT',
+            name : 'jsconsole/editors/CodeMirrorEditor',
+            title : 'jsconsole.tool.JavaScriptConsoleTool.tab.ftlInput.title',
+            requires : [ 'freemarkerSource' ],
+            config : {
+                // autofocus is bad when used e.g. in AlfTabContainer
+                autofocus : false,
+                updateContentTopic : '{updateFreemarkerSourceTopic}',
+                contentUpdatedTopic : '{freemarkerSourceUpdatedTopic}'
             }
         } ],
 
@@ -103,6 +117,16 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 clearContentTopic : '{resetConsoleOutputTopic}',
                 appendContentTopic : '{appendConsoleOutputTopic}'
             }
+        }, {
+            id : 'TEXT-OUTPUT',
+            name : 'jsconsole/editors/CodeMirrorEditor',
+            title : 'jsconsole.tool.JavaScriptConsoleTool.tab.textOutput.title',
+            requires : [ 'templateOutput' ],
+            config : {
+                readOnly : true,
+                autofocus : false,
+                updateContentTopic : '{updateTemplateOutputTopic}'
+            }
         } ],
 
         widgetsForOutputTabs : null,
@@ -119,11 +143,9 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         postCreate : function jsconsole_tool_JavaScriptConsoleTool__postCreate()
         {
-            var menuBarWidgets, inputWidgets, buttonWidgets, outputWidgets, collectTabSupportRequirements;
-            
-            // TODO Need some way to limit height for AlfTabContainer instances so tool fits on one page
+            var menuBarWidgets, inputWidgets, buttonWidgets, outputWidgets, collectTabSupportRequirements, footerNodes;
 
-            this._tabSupportRequirements = {}
+            this._tabSupportRequirements = {};
             this._backendDefinitions = {};
 
             menuBarWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultMenuBar, this.widgetsForMenuBar);
@@ -210,12 +232,55 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
             this.addResizeListener(this.domNode);
 
+            if (this.restrictToPageHeight === true)
+            {
+                footerNodes = query('.alfresco-share > div.sticky-footer, .alfresco-share > .sticky-wrapper > .sticky-push',
+                        document.documentElement);
+                if (footerNodes.length > 0)
+                {
+                    this._footerHeight = footerNodes[0].offsetHeight;
+                }
+                else
+                {
+                    this._footerHeight = 0;
+                }
+
+                this._recalculateHeight();
+
+                this.alfSetupResizeSubscriptions(this.onResize, this);
+            }
+
             // this will only listen on "our" pubSubScope
             this.alfSubscribe(this.discoverBackendsTopic + '_SUCCESS', lang.hitch(this, this.onBackendDiscoveryResponse));
             this.alfSubscribe(this.toggleActiveBackendTopic, lang.hitch(this, this.onToggleActiveBackendRequest));
 
             // trigger discovery
             this.alfPublish(this.discoverBackendsTopic, {}, true);
+        },
+
+        onResize : function jsconsole_tool_JavaScriptConsoleTool__onResize(resizedNode)
+        {
+            // schedule for later to avoid costly / too aggressive handling
+            functionUtils.debounce({
+                name : 'jsconsole/tool/JavaScriptConsoleTool-resize',
+                func : lang.hitch(this, this._recalculateHeight),
+                timeoutMs : 50
+            });
+        },
+
+        _recalculateHeight : function jsconsole_tool_JavaScriptConsoleTool__recalculateHeight()
+        {
+            var position, winBox;
+
+            position = domGeom.position(this.domNode, true);
+            // calculate window size without us
+            domClass.add(this.domNode, 'share-hidden');
+            winBox = win.getBox();
+            domStyle.set(this.domNode, {
+                // 1em is for typical #bd padding-bottom
+                height : 'calc(' + (winBox.h - this._footerHeight - position.y) + 'px - 1em)'
+            });
+            domClass.remove(this.domNode, 'share-hidden');
         },
 
         processWidgetsWithDefaults : function jsconsole_tool_JavaScriptConsoleTool__processWidgetsWithDefaults(defaultWidgets,
@@ -289,7 +354,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
         replaceTopicPlaceholders : function jsconsole_tool_JavaScriptConsoleTool__replaceTopicPlaceholders(v)
         {
             var result, topicKey;
-            if (/^{[a-zA-Z]+Topic}$/.test(v))
+            if (/^\{[a-zA-Z]+Topic\}$/.test(v))
             {
                 topicKey = v.slice(1, -1);
                 if (lang.isString(this[topicKey]))

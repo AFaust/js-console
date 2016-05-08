@@ -196,6 +196,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
             this.editor = CodeMirror.fromTextArea(this.editorNode, editorConfig);
             this.editor.on('change', lang.hitch(this, this.onEditorChange));
+            this.editor.setSize(null, '100%');
 
             if (lang.isString(this._lazyContent))
             {

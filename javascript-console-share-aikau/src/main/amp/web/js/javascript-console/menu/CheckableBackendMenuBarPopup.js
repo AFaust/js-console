@@ -44,7 +44,7 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
                 this._recentlyDiscoveredBackends.push(backendDefinition);
 
                 functionUtils.debounce({
-                    name : 'CheckableBackendMenuBarPopup_delayedMenuItemAddition',
+                    name : 'jsconsole/menu/CheckableBackendMenuBarPopup-delayedMenuItemAddition',
                     timeoutMs : 150,
                     func : lang.hitch(this, this._delayedMenuItemAddition)
                 });

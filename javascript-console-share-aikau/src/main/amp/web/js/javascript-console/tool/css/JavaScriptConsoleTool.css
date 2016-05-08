@@ -1,6 +1,23 @@
 .jsconsole-tool-JavaScriptConsoleTool {
-    .alfresco-layout-AlfTabContainer .alfresco-layout-AlfTabContainer__OuterTab > *:first-child {
-        margin-top: @standard-line-height / 2;
+    > .inputContainer,
+    > .outputContainer {
+        height: calc(~"50% -" (2 * @standard-button-padding-vertical) + @standard-button-line-height + (3 * @standard-line-height / 2));
+        
+        > .alfresco-layout-AlfTabContainer .dijitTabPaneWrapper.dijitTabContainerTop-container {
+            /* TODO Need to determine how 27px are dynamically calculated + set by Dojo */
+            /* hard-coded value is not very good style */
+            height: calc(~"100% -" 27px);
+            
+            > .dijitTabContainerTopChildWrapper,
+            .alfresco-layout-AlfTabContainer__OuterTab {
+                height: 100%;
+            }
+            
+            .alfresco-layout-AlfTabContainer__OuterTab > *:first-child {
+                height: calc(~"100% -" @standard-line-height / 2);
+                margin-top: @standard-line-height / 2;
+            }
+        }
     }
     
     > .consoleMenuBar,
