@@ -52,6 +52,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.jsInput.title',
             requires : [ 'javascriptSource' ],
             config : {
+                additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--javascriptEditor',
                 // autofocus is bad when used e.g. in AlfTabContainer
                 autofocus : false,
                 updateContentTopic : '{updateJavaScriptSourceTopic}',
@@ -63,12 +64,32 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.ftlInput.title',
             requires : [ 'freemarkerSource' ],
             config : {
+                additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--freemarkerEditor',
                 // autofocus is bad when used e.g. in AlfTabContainer
                 autofocus : false,
                 updateContentTopic : '{updateFreemarkerSourceTopic}',
                 contentUpdatedTopic : '{freemarkerSourceUpdatedTopic}'
             }
-        } ],
+        }, {
+            // TODO Make into a block of two alternative widgets (label for "no parameters" and form)
+            id : 'PARAMS-INPUT',
+            name : 'alfresco/forms/DynamicForm',
+            title : 'jsconsole.tool.JavaScriptConsoleTool.tab.parameterInput.title',
+            delayProcessing : false,
+            config : {
+                additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--parameterForm',
+                subscriptionTopic : '{reinitializeExecutionParameterFormTopic}',
+                formWidgetsProperty : 'widgets',
+                formWidetsPropertyStringified : false,
+                formValueProperty : 'values',
+                waitForPageWidgets : false,
+                pubSubScope : '{executionParameterFormPubSubScope}',
+                autoSavePublishTopic : '{autoSaveExecutionParameterFormTopic}'
+            }
+        }
+        // TODO Use alfresco/forms/DynamicForm for execution parameters
+        // TODO Use autoSavePublishTopic to ensure we are always up-to-date in execution button payload with current parameters
+        ],
 
         widgetsForInputTabs : null,
 
@@ -99,6 +120,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                         content : 'freemarkerSource'
                     }
                 }
+                // TODO Map in parameters from form auto-save (autoSavePublishTopic)
                 // TODO Configure other dynamic payload elements
                 ]
             }
@@ -112,6 +134,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.consoleOutput.title',
             requires : [ 'consoleOutput' ],
             config : {
+                additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--consoleOutput',
                 readOnly : true,
                 autofocus : false,
                 clearContentTopic : '{resetConsoleOutputTopic}',
@@ -123,6 +146,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.textOutput.title',
             requires : [ 'templateOutput' ],
             config : {
+                additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--templateOutput',
                 readOnly : true,
                 autofocus : false,
                 updateContentTopic : '{updateTemplateOutputTopic}'
@@ -131,6 +155,13 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         widgetsForOutputTabs : null,
 
+        executionParameterFormPubSubScope : null,
+
+        // these are primarily internal, so not contained in topics mixin
+        reinitializeExecutionParameterFormTopic : 'JS_CONSOLE_REINITIALIZE_EXECUTION_PARAMETER_FORM',
+
+        autoSaveExecutionParameterFormTopic : 'JS_CONSOLE_AUTO_SAVE_EXECUTION_PARAMETER_FORM',
+
         postMixInProperties : function jsconsole_tool_JavaScriptConsoleTool__postMixInProperties()
         {
             this.inherited(arguments);
@@ -138,6 +169,12 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             {
                 // a JavaScript Console Tool instance should (as a complex construct) always have an isolated pubSubScope
                 this.pubSubScope = this.generateUuid();
+            }
+
+            // we need to control the form pubSubScope
+            if (this.executionParameterFormPubSubScope === null)
+            {
+                this.executionParameterFormPubSubScope = this.generateUuid();
             }
         },
 
@@ -346,12 +383,44 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                         }, this);
             }
 
-            this.processObject([ 'replaceTopicPlaceholders' ], widgetsToCreate);
+            this.processObject([ 'replaceTopicTokens', 'replacePubSubScopeTokens' ], widgetsToCreate);
 
             return widgetsToCreate;
         },
 
-        replaceTopicPlaceholders : function jsconsole_tool_JavaScriptConsoleTool__replaceTopicPlaceholders(v)
+        replacePubSubScopeTokens : function jsconsole_tool_JavaScriptConsoleTool__replacePubSubScopeTokens(v)
+        {
+            var result, scopeKey;
+
+            if (/^\{([a-zA-Z]+PubSubScope|pubSubScope)}$/.test(v))
+            {
+                scopeKey = v.slice(1, -1);
+                if (lang.isString(this[scopeKey]))
+                {
+                    result = this[scopeKey];
+                }
+                else
+                {
+                    result = v;
+                }
+            }
+            else if (/^\{[^}]*}$/.test(v))
+            {
+                result = v;
+            }
+            else
+            {
+                result = lang.replace(v, lang.hitch(this, function jsconsole_tool_JavaScriptConsoleTool__replacePubSubScopeTokens(o, tib,
+                        twb)
+                {
+                    return this.replacePubSubScopeTokens(tib);
+                }, this));
+            }
+
+            return result;
+        },
+
+        replaceTopicTokens : function jsconsole_tool_JavaScriptConsoleTool__replaceTopicTokens(v)
         {
             var result, topicKey;
             if (/^\{[a-zA-Z]+Topic\}$/.test(v))
@@ -366,9 +435,17 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                     result = v;
                 }
             }
-            else
+            else if (/^\{[^}]*}$/.test(v))
             {
                 result = v;
+            }
+            else
+            {
+                result = lang.replace(v, lang.hitch(this, function jsconsole_tool_JavaScriptConsoleTool__replaceTopicTokens_replace(o, tib,
+                        twb)
+                {
+                    return this.replaceTopicTokens(tib);
+                }, this));
             }
 
             return result;
@@ -386,7 +463,29 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         onToggleActiveBackendRequest : function jsconsole_tool_JavaScriptConsoleTool__onToggleActiveBackendRequest(payload)
         {
-            // TODO enable/disable tabs based on feature requirements
+            var backendDefinition, reinitializeParameterFormPayload;
+
+            if (payload !== undefined && payload !== null && lang.isString(payload.backend)
+                    && this._backendDefinitions.hasOwnProperty(payload.backend))
+            {
+                backendDefinition = this._backendDefinitions[payload.backend];
+                // TODO enable/disable tabs based on feature requirements
+
+                // TODO store current execution parameter form values and reinitialize values for new backend
+
+                reinitializeParameterFormPayload = {
+                    widgets : [],
+                    values : {}
+                };
+
+                if (lang.isArray(backendDefinition.executionParameterFormWidgets))
+                {
+                    reinitializeParameterFormPayload.widgets = JSON.parse(JSON.stringify(backendDefinition.executionParameterFormWidgets));
+                }
+
+                this.alfPublish(this.reinitializeExecutionParameterFormTopic, reinitializeParameterFormPayload, false, false,
+                        this.executionParameterFormPubSubScope);
+            }
         }
     });
 });

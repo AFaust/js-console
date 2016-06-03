@@ -20,6 +20,71 @@ define(
                             i18nFile : './i18n/LegacyRepositoryConsoleBackend.properties'
                         } ],
 
+                        widgetsForExecutionParameterForm : [ {
+                            id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-URL_ARGUMENTS',
+                            name : 'alfresco/forms/controls/TextBox',
+                            config : {
+                                name : 'urlArguments',
+                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.urlArguments.label',
+                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.urlArguments.description',
+                                value : ''
+                            }
+                        }, {
+                            id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-RUN_AS',
+                            name : 'alfresco/forms/controls/TextBox',
+                            config : {
+                                name : 'runAs',
+                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runAs.label',
+                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runAs.description',
+                                value : 'admin'
+                            }
+                        }, {
+                            id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-ISOLATION',
+                            name : 'alfresco/forms/controls/Select',
+                            config : {
+                                name : 'isolation',
+                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.label',
+                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.description',
+                                optionsConfig : {
+                                    fixed : [ {
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.none.label',
+                                        value : 'none'
+                                    }, {
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.readOnly.label',
+                                        value : 'readonly'
+                                    }, {
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.readWrite.label',
+                                        value : 'readwrite'
+                                    } ]
+                                },
+                                value : 'readwrite'
+                            }
+                        }, {
+                            id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-RUN_LIKE_CRAZY',
+                            name : 'alfresco/forms/controls/Select',
+                            config : {
+                                name : 'runLikeCrazy',
+                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runLikeCrazy.label',
+                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runLikeCrazy.description',
+                                optionsConfig : {
+                                    fixed : [ {
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runLikeCrazy.off.label',
+                                        value : '-1'
+                                    }, {
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runLikeCrazy.tenS.label',
+                                        value : '10000'
+                                    }, {
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.oneS.label',
+                                        value : '1000'
+                                    }, {
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.zero.label',
+                                        value : '0'
+                                    } ]
+                                },
+                                value : '-1'
+                            }
+                        } ],
+
                         initService : function jsconsole_backend_LegacyRepositoryConsole__initService()
                         {
                             this.inherited(arguments);
@@ -47,7 +112,8 @@ define(
                                 name : 'legacyRepositoryConsole',
                                 label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.label',
                                 description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.description',
-                                supports : [ 'javascriptSource', 'freemarkerSource', 'consoleOutput', 'templateOutput' ]
+                                supports : [ 'javascriptSource', 'freemarkerSource', 'consoleOutput', 'templateOutput' ],
+                                executionParameterFormWidgets : lang.clone(this.widgetsForExecutionParameterForm)
                             }, false, false, payload.alfResponseScope || '');
                         },
 
