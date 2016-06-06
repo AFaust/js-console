@@ -119,8 +119,14 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                     dataMapping : {
                         content : 'freemarkerSource'
                     }
+                }, {
+                    // TODO Report requirement: defined scope for subscription (or global)
+                    topic : '{autoSaveExecutionParameterFormTopic}',
+                    pubSubScope : '{executionParameterFormPubSubScope}',
+                    dataMapping : {
+                        executionParameter : 'executionParameter'
+                    }
                 }
-                // TODO Map in parameters from form auto-save (autoSavePublishTopic)
                 // TODO Configure other dynamic payload elements
                 ]
             }
@@ -180,26 +186,13 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         postCreate : function jsconsole_tool_JavaScriptConsoleTool__postCreate()
         {
-            var menuBarWidgets, inputWidgets, buttonWidgets, outputWidgets, collectTabSupportRequirements, footerNodes;
+            var collectTabSupportRequirements, footerNodes;
 
+            this._activeBackend = null;
+            this._activeBackendName = null;
+            this._executionParameterValuesByBackend = {};
             this._tabSupportRequirements = {};
             this._backendDefinitions = {};
-
-            menuBarWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultMenuBar, this.widgetsForMenuBar);
-            if (lang.isArray(menuBarWidgets) && menuBarWidgets.length > 0)
-            {
-                menuBarWidgets = [ {
-                    name : 'alfresco/menus/AlfMenuBar',
-                    config : {
-                        widgets : menuBarWidgets
-                    }
-                } ];
-                this.processWidgets(menuBarWidgets, this.consoleMenuBarNode, 'createConsoleMenuBar');
-            }
-            else
-            {
-                domClass.add(this.consoleMenuBarNode, 'share-hidden');
-            }
 
             collectTabSupportRequirements = function jsconsole_tool_JavaScriptConsoleTool__postCreate_collectTabSupportRequirements(
                     tabWidget)
@@ -217,55 +210,10 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 }
             };
 
-            inputWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultInputTabs, this.widgetsForInputTabs);
-            if (lang.isArray(inputWidgets) && inputWidgets.length > 0)
-            {
-                array.forEach(inputWidgets, collectTabSupportRequirements, this);
-
-                inputWidgets = [ {
-                    name : 'alfresco/layout/AlfTabContainer',
-                    config : {
-                        tabDisablementTopic : 'JS_CONSOLE_DISABLE_TAB',
-                        widgets : inputWidgets
-                    }
-                } ];
-
-                this.processWidgets(inputWidgets, this.inputContainerNode, 'createInputTabs');
-            }
-            else
-            {
-                domClass.add(this.inputContainerNode, 'share-hidden');
-            }
-
-            buttonWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultButtons, this.widgetsForButtons);
-            if (lang.isArray(buttonWidgets) && buttonWidgets.length > 0)
-            {
-                this.processWidgets(buttonWidgets, this.consoleButtonsNode, 'createButtons');
-            }
-            else
-            {
-                domClass.add(this.consoleButtonsNode, 'share-hidden');
-            }
-
-            outputWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultOutputTabs, this.widgetsForOutputTabs);
-            if (lang.isArray(outputWidgets) && outputWidgets.length > 0)
-            {
-                array.forEach(outputWidgets, collectTabSupportRequirements, this);
-
-                outputWidgets = [ {
-                    name : 'alfresco/layout/AlfTabContainer',
-                    config : {
-                        tabDisablementTopic : 'JS_CONSOLE_DISABLE_TAB',
-                        widgets : outputWidgets
-                    }
-                } ];
-
-                this.processWidgets(outputWidgets, this.outputContainerNode, 'createOutputTabs');
-            }
-            else
-            {
-                domClass.add(this.outputContainerNode, 'share-hidden');
-            }
+            this._setupMenuBar();
+            this._setupInputTabs(collectTabSupportRequirements);
+            this._setupButtons();
+            this._setupOutputTabs(collectTabSupportRequirements);
 
             this.addResizeListener(this.domNode);
 
@@ -290,6 +238,8 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             // this will only listen on "our" pubSubScope
             this.alfSubscribe(this.discoverBackendsTopic + '_SUCCESS', lang.hitch(this, this.onBackendDiscoveryResponse));
             this.alfSubscribe(this.toggleActiveBackendTopic, lang.hitch(this, this.onToggleActiveBackendRequest));
+            this.alfSubscribe(this.executionParameterFormPubSubScope + this.autoSaveExecutionParameterFormTopic, lang.hitch(this,
+                    this.onExecutionParameterUpdate));
 
             // trigger discovery
             this.alfPublish(this.discoverBackendsTopic, {}, true);
@@ -303,6 +253,92 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 func : lang.hitch(this, this._recalculateHeight),
                 timeoutMs : 50
             });
+        },
+
+        _setupMenuBar : function jsconsole_tool_JavaScriptConsoleTool__setupMenuBar()
+        {
+            var menuBarWidgets;
+
+            menuBarWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultMenuBar, this.widgetsForMenuBar);
+            if (lang.isArray(menuBarWidgets) && menuBarWidgets.length > 0)
+            {
+                menuBarWidgets = [ {
+                    name : 'alfresco/menus/AlfMenuBar',
+                    config : {
+                        widgets : menuBarWidgets
+                    }
+                } ];
+                this.processWidgets(menuBarWidgets, this.consoleMenuBarNode, 'createConsoleMenuBar');
+            }
+            else
+            {
+                domClass.add(this.consoleMenuBarNode, 'share-hidden');
+            }
+        },
+
+        _setupInputTabs : function jsconsole_tool_JavaScriptConsoleTool__setupInputTabs(collectTabSupportRequirements)
+        {
+            var inputWidgets;
+
+            inputWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultInputTabs, this.widgetsForInputTabs);
+            if (lang.isArray(inputWidgets) && inputWidgets.length > 0)
+            {
+                array.forEach(inputWidgets, collectTabSupportRequirements, this);
+
+                inputWidgets = [ {
+                    name : 'alfresco/layout/AlfTabContainer',
+                    config : {
+                        tabDisablementTopic : 'JS_CONSOLE_DISABLE_TAB',
+                        widgets : inputWidgets
+                    }
+                } ];
+
+                this.processWidgets(inputWidgets, this.inputContainerNode, 'createInputTabs');
+            }
+            else
+            {
+                domClass.add(this.inputContainerNode, 'share-hidden');
+            }
+        },
+
+        _setupButtons : function jsconsole_tool_JavaScriptConsoleTool__setupButtons()
+        {
+            var buttonWidgets;
+
+            buttonWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultButtons, this.widgetsForButtons);
+            if (lang.isArray(buttonWidgets) && buttonWidgets.length > 0)
+            {
+                this.processWidgets(buttonWidgets, this.consoleButtonsNode, 'createButtons');
+            }
+            else
+            {
+                domClass.add(this.consoleButtonsNode, 'share-hidden');
+            }
+        },
+
+        _setupOutputTabs : function jsconsole_tool_JavaScriptConsoleTool__setupOutputTabs(collectTabSupportRequirements)
+        {
+            var outputWidgets;
+
+            outputWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultOutputTabs, this.widgetsForOutputTabs);
+            if (lang.isArray(outputWidgets) && outputWidgets.length > 0)
+            {
+                array.forEach(outputWidgets, collectTabSupportRequirements, this);
+
+                outputWidgets = [ {
+                    name : 'alfresco/layout/AlfTabContainer',
+                    config : {
+                        tabDisablementTopic : 'JS_CONSOLE_DISABLE_TAB',
+                        widgets : outputWidgets
+                    }
+                } ];
+
+                this.processWidgets(outputWidgets, this.outputContainerNode, 'createOutputTabs');
+            }
+            else
+            {
+                domClass.add(this.outputContainerNode, 'share-hidden');
+            }
         },
 
         _recalculateHeight : function jsconsole_tool_JavaScriptConsoleTool__recalculateHeight()
@@ -471,11 +507,11 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 backendDefinition = this._backendDefinitions[payload.backend];
                 // TODO enable/disable tabs based on feature requirements
 
-                // TODO store current execution parameter form values and reinitialize values for new backend
-
                 reinitializeParameterFormPayload = {
                     widgets : [],
-                    values : {}
+                    values : {
+                        executionParameter : this._executionParameterValuesByBackend[payload.backend] || {}
+                    }
                 };
 
                 if (lang.isArray(backendDefinition.executionParameterFormWidgets))
@@ -485,7 +521,21 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
                 this.alfPublish(this.reinitializeExecutionParameterFormTopic, reinitializeParameterFormPayload, false, false,
                         this.executionParameterFormPubSubScope);
+
+                if (lang.isString(this._activeBackendName))
+                {
+                    domClass.remove(this.domNode, 'jsconsole-tool-JavaScriptConsoleTool--active-backend--' + this._activeBackendName);
+                }
+                this._activeBackend = payload.backend;
+                this._activeBackendName = backendDefinition.name;
+                domClass.add(this.domNode, 'jsconsole-tool-JavaScriptConsoleTool--active-backend--' + this._activeBackendName);
             }
+        },
+
+        onExecutionParameterUpdate : function jsconsole_tool_JavaScriptConsoleTool__onExecutionParameterUpdate(payload)
+        {
+            var executionParameter = lang.get('executionParameter', false, payload);
+            this._executionParameterValuesByBackend[this._activeBackend] = executionParameter;
         }
     });
 });

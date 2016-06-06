@@ -25,4 +25,61 @@
     > .consoleButtons {
         margin-bottom: @standard-line-height / 2;
     }
+    
+    .jsconsole-tool-JavaScriptConsoleTool--parameterForm > form {
+        > .alfresco-forms-controls-BaseFormControl {
+            /* All the following fix stupid default styling regarding form controls (personal point-of-view) */
+            
+            > .control-row > .control > .djitTextBox,
+            > .title-row > .validationMessage {
+                width: auto;
+            }
+            
+            &.fixedWidth > .control-row > .control > .djitTextBox,
+            &.fixedWidth > .title-row > .validationMessage {
+                width: 100%;
+            }
+            
+            > .description-row .description {
+                word-wrap: break-word;
+            }
+            
+            > .control-row,
+            > .control-row > .control {
+                display: block;
+            }
+            
+            > .control-row > .control {
+                /* reset margin and transform to padding which is handled properly with regards to box sizing*/
+                margin-right: 0;
+                padding-right: 5px;
+            }
+            
+            /** correctly consider any set margins / paddings while still maintaining width constraints */
+            > .control-row,
+            > .control-row > .control,
+            > .control-row > .control > * {
+                -moz-box-sizing: border-box;
+                -webkit-box-sizing: border-box;
+                -ms-box-sizing: border-box;
+                box-sizing: border-box;
+            }
+            
+            > .control-row > .control > *
+            {
+                width: 100%;
+            }
+            
+            /** Override the calculated width that subtracts space for an icon we don't even display */
+            span.dijitNoIcon.alf-icon + input.dijitInputInner
+            {
+                width: 100% !important;
+            }
+            
+            /** Fix font consistency issue in IE (does not inherit from global) */
+            textarea {
+                font-family: @standard-font;
+            }
+        }
+    }
 }

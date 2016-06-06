@@ -16,6 +16,10 @@ define(
                     [ BaseService, CoreXhr, _ConsoleTopicsMixin ],
                     {
 
+                        cssRequirements : [ {
+                            cssFile : './css/LegacyRepositoryConsoleBackend.css'
+                        } ],
+
                         i18nRequirements : [ {
                             i18nFile : './i18n/LegacyRepositoryConsoleBackend.properties'
                         } ],
@@ -24,36 +28,39 @@ define(
                             id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-URL_ARGUMENTS',
                             name : 'alfresco/forms/controls/TextBox',
                             config : {
-                                name : 'urlArguments',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.urlArguments.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.urlArguments.description',
+                                additionalCssClasses : 'fixedWidth parameters-urlArguments',
+                                name : 'executionParameter.urlArguments',
+                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.urlArguments.label',
+                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.urlArguments.description',
                                 value : ''
                             }
                         }, {
                             id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-RUN_AS',
                             name : 'alfresco/forms/controls/TextBox',
                             config : {
-                                name : 'runAs',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runAs.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runAs.description',
+                                additionalCssClasses : 'fixedWidth parameters-runAs',
+                                name : 'executionParameter.runAs',
+                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runAs.label',
+                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runAs.description',
                                 value : 'admin'
                             }
                         }, {
                             id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-ISOLATION',
                             name : 'alfresco/forms/controls/Select',
                             config : {
-                                name : 'isolation',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.description',
+                                additionalCssClasses : 'fixedWidth parameters-isolation',
+                                name : 'executionParameter.isolation',
+                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.label',
+                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.description',
                                 optionsConfig : {
                                     fixed : [ {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.none.label',
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.none.label',
                                         value : 'none'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.readOnly.label',
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.readOnly.label',
                                         value : 'readonly'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.readWrite.label',
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.readWrite.label',
                                         value : 'readwrite'
                                     } ]
                                 },
@@ -63,21 +70,22 @@ define(
                             id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-RUN_LIKE_CRAZY',
                             name : 'alfresco/forms/controls/Select',
                             config : {
-                                name : 'runLikeCrazy',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runLikeCrazy.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runLikeCrazy.description',
+                                additionalCssClasses : 'fixedWidth parameters-runLikeCrazy',
+                                name : 'executionParameter.runLikeCrazy',
+                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.label',
+                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.description',
                                 optionsConfig : {
                                     fixed : [ {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runLikeCrazy.off.label',
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.off.label',
                                         value : '-1'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.runLikeCrazy.tenS.label',
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.tenS.label',
                                         value : '10000'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.oneS.label',
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.oneS.label',
                                         value : '1000'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.params.isolation.zero.label',
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.zero.label',
                                         value : '0'
                                     } ]
                                 },
