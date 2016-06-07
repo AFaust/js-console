@@ -86,10 +86,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 pubSubScope : '{executionParameterFormPubSubScope}',
                 autoSavePublishTopic : '{autoSaveExecutionParameterFormTopic}'
             }
-        }
-        // TODO Use alfresco/forms/DynamicForm for execution parameters
-        // TODO Use autoSavePublishTopic to ensure we are always up-to-date in execution button payload with current parameters
-        ],
+        } ],
 
         widgetsForInputTabs : null,
 
@@ -238,8 +235,8 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             // this will only listen on "our" pubSubScope
             this.alfSubscribe(this.discoverBackendsTopic + '_SUCCESS', lang.hitch(this, this.onBackendDiscoveryResponse));
             this.alfSubscribe(this.toggleActiveBackendTopic, lang.hitch(this, this.onToggleActiveBackendRequest));
-            this.alfSubscribe(this.executionParameterFormPubSubScope + this.autoSaveExecutionParameterFormTopic, lang.hitch(this,
-                    this.onExecutionParameterUpdate));
+            this.alfSubscribe(this.autoSaveExecutionParameterFormTopic, lang.hitch(this, this.onExecutionParameterUpdate), false, false,
+                    this.executionParameterFormPubSubScope);
 
             // trigger discovery
             this.alfPublish(this.discoverBackendsTopic, {}, true);
