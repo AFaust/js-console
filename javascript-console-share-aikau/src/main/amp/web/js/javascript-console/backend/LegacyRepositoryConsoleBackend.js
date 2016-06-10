@@ -135,13 +135,18 @@ define(
                                     rqData = {
                                         script : payload.selectedJavaScriptSource || payload.javaScriptSource || '',
                                         template : payload.freemarkerSource,
-                                        resultChannel : this.generateUuid()
+                                        resultChannel : this.generateUuid(),
+                                        transaction : lang.getObject('executionParameter.isolation', false, payload) || 'readwrite',
+                                        runas : lang.getObject('executionParameter.runAs', false, payload) || Constants.USERNAME,
+                                        urlargs : lang.getObject('executionParameter.urlArguments', false, payload) || ''
                                     };
 
                                     consoleRequest = {
                                         data : rqData,
                                         alfResponseScope : payload.alfResponseScope,
-                                        startTime : new Date()
+                                        startTime : new Date(),
+                                        runLikeCrazy : parseInt(lang.getObject('executionParameter.runLikeCrazy', false, payload) || '-1',
+                                                10)
                                     };
 
                                     this.serviceXhr({
@@ -212,11 +217,14 @@ define(
                                     this.onExecuteInBackendCheckProgress(consoleRequest);
 
                                     // TODO Handle execution stats
-                                    // TODO Handle completion state + runLikeCrazy
+                                    this._runRequestLikeCrazy(consoleRequest);
+                                    consoleRequest.completed = true;
+                                    consoleRequest.checkTimer.remove();
                                 }
                                 catch (e)
                                 {
                                     this.alfLog('error', 'Encountered error during response handling', response, consoleRequest, e);
+                                    this._runRequestLikeCrazy(consoleRequest);
                                     consoleRequest.completed = true;
                                     consoleRequest.checkTimer.remove();
                                 }
@@ -301,7 +309,7 @@ define(
                                     }
 
                                     // TODO Handle execution stats
-                                    // TODO Handle completion state + runLikeCrazy
+                                    this._runRequestLikeCrazy(consoleRequest);
                                     consoleRequest.completed = true;
                                     consoleRequest.checkTimer.remove();
                                 }
@@ -370,11 +378,39 @@ define(
                                         }
 
                                         // TODO Handle execution stats
-                                        // TODO Handle completion state + runLikeCrazy
+                                        this._runRequestLikeCrazy(consoleRequest);
                                         consoleRequest.completed = true;
                                         consoleRequest.checkTimer.remove();
                                     }
                                 }
+                            }
+                        },
+
+                        _runRequestLikeCrazy : function jsconsole_backend_LegacyRepositoryConsole__runRequestLikeCrazy(consoleRequest)
+                        {
+                            if (consoleRequest.runLikeCrazy >= 0)
+                            {
+                                setTimeout(lang.hitch(this,
+                                        function jsconsole_backend_LegacyRepositoryConsole__runRequestLikeCrazy_trigger(oldConsoleRequest)
+                                        {
+                                            var repeatConsoleRequest = lang.clone(oldConsoleRequest);
+                                            lang.setObject('rqData.resultChannel', this.generateUuid(), repeatConsoleRequest);
+                                            lang.setObject('startTime', new Date(), repeatConsoleRequest);
+                                            delete repeatConsoleRequest.completed;
+                                            delete repeatConsoleRequest.superseded;
+
+                                            this.serviceXhr({
+                                                url : Constants.PROXY_URI + 'de/fme/jsconsole/execute',
+                                                data : repeatConsoleRequest.rqData,
+                                                method : 'POST',
+                                                successCallback : lang.hitch(this, this.onExecuteInBackendSuccess, repeatConsoleRequest),
+                                                failureCallback : lang.hitch(this, this.onExecuteInBackendFailure, repeatConsoleRequest)
+                                            });
+
+                                            repeatConsoleRequest.checkTimer = functionUtils.addRepeatingFunction(lang.hitch(this,
+                                                    this.onExecuteInBackendCheckProgress, repeatConsoleRequest), 'MEDIUM');
+                                            this._activeRequestByScope[repeatConsoleRequest.alfResponseScope] = repeatConsoleRequest;
+                                        }, consoleRequest), consoleRequest.runLikeCrazy);
                             }
                         }
 

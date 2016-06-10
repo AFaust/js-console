@@ -92,7 +92,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         widgetsForDefaultButtons : [ {
             id : 'EXECUTE_BUTTON',
-            name : 'alfresco/buttons/AlfDynamicPayloadButton',
+            name : 'jsconsole/button/DynamicPayloadButton',
             config : {
                 label : 'jsconsole.tool.JavaScriptConsoleTool.button.execute.label',
                 title : 'jsconsole.tool.JavaScriptConsoleTool.button.execute.title',
@@ -117,7 +117,6 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                         content : 'freemarkerSource'
                     }
                 }, {
-                    // TODO Report requirement: defined scope for subscription (or global)
                     topic : '{autoSaveExecutionParameterFormTopic}',
                     pubSubScope : '{executionParameterFormPubSubScope}',
                     dataMapping : {
