@@ -78,7 +78,8 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
 
             if (menuItemWidgets.length > 0)
             {
-                menuItemWidgets.sort(function jsconsole_menu_CheckableBackendMenuBarPopup___delayedMenuItemAddition_sort(a, b)
+                menuItemWidgets.sort(lang.hitch(this, function jsconsole_menu_CheckableBackendMenuBarPopup___delayedMenuItemAddition_sort(
+                        a, b)
                 {
                     var labelA, labelB;
 
@@ -89,7 +90,7 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
                     cachedLabels[b.config.label] = labelB;
 
                     return labelA.localeCompare(labelB);
-                });
+                }));
 
                 if (this._firstItems === true)
                 {
