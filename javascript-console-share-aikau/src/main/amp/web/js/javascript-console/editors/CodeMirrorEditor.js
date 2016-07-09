@@ -291,7 +291,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                     }
                     else
                     {
-                        newDoc = new CodeMirror.Doc('', this.mode, 1);
+                        newDoc = new CodeMirror.Doc('', this.mode, 0);
                         this._docsByBackend[backend] = newDoc;
                     }
 
