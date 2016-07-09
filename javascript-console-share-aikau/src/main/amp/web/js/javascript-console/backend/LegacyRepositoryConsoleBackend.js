@@ -21,6 +21,8 @@ define(
                         } ],
 
                         i18nRequirements : [ {
+                            i18nFile : './i18n/CommonBackend.properties'
+                        }, {
                             i18nFile : './i18n/LegacyRepositoryConsoleBackend.properties'
                         } ],
 
@@ -30,8 +32,8 @@ define(
                             config : {
                                 additionalCssClasses : 'fixedWidth parameters-urlArguments',
                                 name : 'executionParameter.urlArguments',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.urlArguments.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.urlArguments.description',
+                                label : 'jsconsole.backend.webscript.parameters.urlArguments.label',
+                                description : 'jsconsole.backend.webscript.parameters.urlArguments.description',
                                 value : ''
                             }
                         }, {
@@ -40,8 +42,8 @@ define(
                             config : {
                                 additionalCssClasses : 'fixedWidth parameters-runAs',
                                 name : 'executionParameter.runAs',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runAs.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runAs.description',
+                                label : 'jsconsole.backend.parameters.runAs.label',
+                                description : 'jsconsole.backend.parameters.runAs.description',
                                 value : 'admin'
                             }
                         }, {
@@ -50,17 +52,17 @@ define(
                             config : {
                                 additionalCssClasses : 'fixedWidth parameters-isolation',
                                 name : 'executionParameter.isolation',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.description',
+                                label : 'jsconsole.backend.repository.parameters.isolation.label',
+                                description : 'jsconsole.backend.repository.parameters.isolation.description',
                                 optionsConfig : {
                                     fixed : [ {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.none.label',
+                                        label : 'jsconsole.backend.repository.parameters.isolation.none.label',
                                         value : 'none'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.readOnly.label',
+                                        label : 'jsconsole.backend.repository.parameters.isolation.readOnly.label',
                                         value : 'readonly'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.isolation.readWrite.label',
+                                        label : 'jsconsole.backend.repository.parameters.isolation.readWrite.label',
                                         value : 'readwrite'
                                     } ]
                                 },
@@ -72,20 +74,20 @@ define(
                             config : {
                                 additionalCssClasses : 'fixedWidth parameters-runLikeCrazy',
                                 name : 'executionParameter.runLikeCrazy',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.description',
+                                label : 'jsconsole.backend.parameters.runLikeCrazy.label',
+                                description : 'jsconsole.backend.parameters.runLikeCrazy.description',
                                 optionsConfig : {
                                     fixed : [ {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.off.label',
+                                        label : 'jsconsole.backend.parameters.runLikeCrazy.off.label',
                                         value : '-1'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.tenS.label',
+                                        label : 'jsconsole.backend.parameters.runLikeCrazy.tenS.label',
                                         value : '10000'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.oneS.label',
+                                        label : 'jsconsole.backend.parameters.runLikeCrazy.oneS.label',
                                         value : '1000'
                                     }, {
-                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.parameters.runLikeCrazy.zero.label',
+                                        label : 'jsconsole.backend.parameters.runLikeCrazy.zero.label',
                                         value : '0'
                                     } ]
                                 },
@@ -93,7 +95,7 @@ define(
                             }
                         } ],
 
-                        initService : function jsconsole_backend_LegacyRepositoryConsole__initService()
+                        initService : function jsconsole_backend_LegacyRepositoryConsoleBackend__initService()
                         {
                             this.inherited(arguments);
 
@@ -104,7 +106,7 @@ define(
                             this._activeRequestByScope = {};
                         },
 
-                        registerSubscriptions : function jsconsole_backend_LegacyRepositoryConsole__registerSubscriptions()
+                        registerSubscriptions : function jsconsole_backend_LegacyRepositoryConsoleBackend__registerSubscriptions()
                         {
                             this.inherited(arguments);
 
@@ -112,7 +114,8 @@ define(
                             this.alfSubscribe(this.executeInBackendTopic, lang.hitch(this, this.onExecuteInBackendRequest));
                         },
 
-                        onDiscoverBackendsRequest : function jsconsole_backend_LegacyRepositoryConsole__onDiscoverBackendsRequest(payload)
+                        onDiscoverBackendsRequest : function jsconsole_backend_LegacyRepositoryConsoleBackend__onDiscoverBackendsRequest(
+                                payload)
                         {
                             // just respond to announce backend to requesting module
                             this.alfPublish((payload.alfResponseTopic || this.discoverBackendsTopic) + '_SUCCESS', {
@@ -125,7 +128,8 @@ define(
                             }, false, false, payload.alfResponseScope || '');
                         },
 
-                        onExecuteInBackendRequest : function jsconsole_backend_LegacyRepositoryConsole__onExecuteInBackendRequest(payload)
+                        onExecuteInBackendRequest : function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendRequest(
+                                payload)
                         {
                             var rqData, consoleRequest;
                             if (payload !== undefined && payload !== null)
@@ -171,7 +175,7 @@ define(
                             }
                         },
 
-                        onExecuteInBackendSuccess : function jsconsole_backend_LegacyRepositoryConsole__onExecuteInBackendSuccess(
+                        onExecuteInBackendSuccess : function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendSuccess(
                                 consoleRequest, response)
                         {
                             this.alfLog('info', 'Request succeeded', response, consoleRequest);
@@ -198,7 +202,7 @@ define(
                                             array
                                                     .forEach(
                                                             response.printOutput,
-                                                            function jsconsole_backend_LegacyRepositoryConsole__onExecuteInBackendSuccess_handlePrintOutputLines(
+                                                            function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendSuccess_handlePrintOutputLines(
                                                                     line)
                                                             {
                                                                 this.alfPublish(this.appendConsoleOutputTopic, {
@@ -231,7 +235,7 @@ define(
                             }
                         },
 
-                        onExecuteInBackendFailure : function jsconsole_backend_LegacyRepositoryConsole__onExecuteInBackendFailure(
+                        onExecuteInBackendFailure : function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendFailure(
                                 consoleRequest, response)
                         {
                             this.alfLog('error', 'Request failed', response, consoleRequest);
@@ -267,7 +271,7 @@ define(
                                             array
                                                     .forEach(
                                                             response.printOutput,
-                                                            function jsconsole_backend_LegacyRepositoryConsole__onExecuteInBackendCheckProgressSuccess_handlePrintOutputLines(
+                                                            function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendCheckProgressSuccess_handlePrintOutputLines(
                                                                     line)
                                                             {
                                                                 this.alfPublish(this.appendConsoleOutputTopic, {
@@ -316,7 +320,7 @@ define(
                             }
                         },
 
-                        onExecuteInBackendCheckProgress : function jsconsole_backend_LegacyRepositoryConsole__onExecuteInBackendCheckProgress(
+                        onExecuteInBackendCheckProgress : function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendCheckProgress(
                                 consoleRequest)
                         {
                             if (consoleRequest.superseded !== true && consoleRequest.completed !== true)
@@ -331,7 +335,7 @@ define(
                             }
                         },
 
-                        onExecuteInBackendCheckProgressSuccess : function jsconsole_backend_LegacyRepositoryConsole__onExecuteInBackendCheckProgressSuccess(
+                        onExecuteInBackendCheckProgressSuccess : function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendCheckProgressSuccess(
                                 consoleRequest, response)
                         {
                             this.alfLog('info', 'Progress check succeeded', response, consoleRequest);
@@ -356,7 +360,7 @@ define(
                                         array
                                                 .forEach(
                                                         response.printOutput,
-                                                        function jsconsole_backend_LegacyRepositoryConsole__onExecuteInBackendCheckProgressSuccess_handlePrintOutputLines(
+                                                        function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendCheckProgressSuccess_handlePrintOutputLines(
                                                                 line)
                                                         {
                                                             this.alfPublish(this.appendConsoleOutputTopic, {
@@ -386,12 +390,14 @@ define(
                             }
                         },
 
-                        _runRequestLikeCrazy : function jsconsole_backend_LegacyRepositoryConsole__runRequestLikeCrazy(consoleRequest)
+                        _runRequestLikeCrazy : function jsconsole_backend_LegacyRepositoryConsoleBackend__runRequestLikeCrazy(
+                                consoleRequest)
                         {
                             if (consoleRequest.runLikeCrazy >= 0)
                             {
                                 setTimeout(lang.hitch(this,
-                                        function jsconsole_backend_LegacyRepositoryConsole__runRequestLikeCrazy_trigger(oldConsoleRequest)
+                                        function jsconsole_backend_LegacyRepositoryConsoleBackend__runRequestLikeCrazy_trigger(
+                                                oldConsoleRequest)
                                         {
                                             var repeatConsoleRequest = lang.clone(oldConsoleRequest);
                                             lang.setObject('rqData.resultChannel', this.generateUuid(), repeatConsoleRequest);
