@@ -28,7 +28,7 @@
     
     .jsconsole-tool-JavaScriptConsoleTool--parameterForm > form {
         > .alfresco-forms-controls-BaseFormControl {
-            /* All the following fix stupid default styling regarding form controls (personal point-of-view) */
+            /* All the following fix stupid default / broken styling regarding form controls (personal point-of-view) */
             
             > .control-row > .control > .djitTextBox,
             > .title-row > .validationMessage {
@@ -68,6 +68,11 @@
             > .control-row > .control > *
             {
                 width: 100%;
+            }
+            
+            > .control-row > .control > table.dijitDownArrowButton .dijitArrowButtonContainer
+            {
+                width: 16px;
             }
             
             /** Override the calculated width that subtracts space for an icon we don't even display */
