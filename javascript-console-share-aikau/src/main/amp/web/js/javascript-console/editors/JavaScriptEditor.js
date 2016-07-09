@@ -14,6 +14,8 @@ define([ 'dojo/_base/declare', 'jsconsole/editors/CodeMirrorEditor', 'cm/mode/ja
 
                 cssRequirements : [ {
                     cssFile : 'cm/addon/lint/lint.css'
+                }, {
+                    cssFile : 'cm/addon/hint/show-hint.css'
                 } ],
 
                 mode : 'javascript',
