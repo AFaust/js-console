@@ -29,6 +29,20 @@ define([ 'dojo/_base/declare', 'alfresco/buttons/AlfDynamicPayloadButton', 'dojo
             {
                 this.alfLog('warn', 'A publishPayloadSubscription is configured without a \'topic\' attribute', pps, this);
             }
+        },
+
+        // TODO Report bug to Aikau: null-values (value reset) or other non-truthy values aren't mapped
+        mapData : function jsconsole_button_DynamicPayloadButton__mapData(dataMapping, data)
+        {
+            Object.keys(dataMapping).forEach(function jsconsole_button_DynamicPayloadButton__mapData_forEachKey(key)
+            {
+                var value;
+                if (lang.exists(key, data))
+                {
+                    value = lang.getObject(key, false, data);
+                    lang.setObject(dataMapping[key], value, this.publishPayload);
+                }
+            }, this);
         }
 
     });
