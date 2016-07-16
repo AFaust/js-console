@@ -48,7 +48,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
         // TODO Need explicit focus grant for editor in first visible tab
         widgetsForDefaultInputTabs : [ {
             id : 'JS-INPUT',
-            name : 'jsconsole/editors/JavaScriptEditor',
+            name : 'jsconsole/editor/JavaScriptEditor',
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.jsInput.title',
             requires : [ 'javascriptSource' ],
             config : {
@@ -60,7 +60,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             }
         }, {
             id : 'FTL-INPUT',
-            name : 'jsconsole/editors/CodeMirrorEditor',
+            name : 'jsconsole/editor/CodeMirrorEditor',
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.ftlInput.title',
             requires : [ 'freemarkerSource' ],
             config : {
@@ -132,7 +132,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         widgetsForDefaultOutputTabs : [ {
             id : 'CONSOLE-OUTPUT',
-            name : 'jsconsole/editors/CodeMirrorEditor',
+            name : 'jsconsole/editor/CodeMirrorEditor',
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.consoleOutput.title',
             requires : [ 'consoleOutput' ],
             config : {
@@ -144,7 +144,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             }
         }, {
             id : 'TEXT-OUTPUT',
-            name : 'jsconsole/editors/CodeMirrorEditor',
+            name : 'jsconsole/editor/CodeMirrorEditor',
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.textOutput.title',
             requires : [ 'templateOutput' ],
             config : {
@@ -152,6 +152,15 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 readOnly : true,
                 autofocus : false,
                 updateContentTopic : '{updateTemplateOutputTopic}'
+            }
+        }, {
+            id : 'PERFORMANCE-REPORT',
+            name : 'jsconsole/tool/PerformancePanel',
+            title : 'jsconsole.tool.JavaScriptConsoleTool.tab.performanceReport.title',
+            delayProcessing : false,
+            requires : [ 'performanceReport' ],
+            config : {
+                additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--performanceReport'
             }
         } ],
 

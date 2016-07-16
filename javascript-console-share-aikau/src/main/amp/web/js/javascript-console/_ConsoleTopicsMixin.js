@@ -19,6 +19,8 @@ define([ 'dojo/_base/declare' ], function(declare)
         freemarkerSourceUpdatedTopic : 'JS_CONSOLE_FTL_SOURCE_UPDATED',
 
         updateTemplateOutputTopic : 'JS_CONSOLE_UPDATE_TEMPLATE_OUTPUT',
+        
+        reportExecutionPerformanceTopic : 'JS_CONSOLE_REPORT_EXECUTION_PERFORMANCE',
 
         appendConsoleOutputTopic : 'JS_CONSOLE_APPEND_CONSOLE_OUTPUT',
 

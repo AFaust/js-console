@@ -118,14 +118,16 @@ define(
                                 payload)
                         {
                             // just respond to announce backend to requesting module
-                            this.alfPublish((payload.alfResponseTopic || this.discoverBackendsTopic) + '_SUCCESS', {
-                                backend : this.backendId,
-                                name : 'legacyRepositoryConsole',
-                                label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.label',
-                                description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.description',
-                                supports : [ 'javascriptSource', 'freemarkerSource', 'consoleOutput', 'templateOutput' ],
-                                executionParameterFormWidgets : lang.clone(this.widgetsForExecutionParameterForm)
-                            }, false, false, payload.alfResponseScope || '');
+                            this.alfPublish((payload.alfResponseTopic || this.discoverBackendsTopic) + '_SUCCESS',
+                                    {
+                                        backend : this.backendId,
+                                        name : 'legacyRepositoryConsole',
+                                        label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.label',
+                                        description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.description',
+                                        supports : [ 'javascriptSource', 'freemarkerSource', 'consoleOutput', 'templateOutput',
+                                                'performanceReport' ],
+                                        executionParameterFormWidgets : lang.clone(this.widgetsForExecutionParameterForm)
+                                    }, false, false, payload.alfResponseScope || '');
                         },
 
                         onExecuteInBackendRequest : function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendRequest(
@@ -179,6 +181,8 @@ define(
                                 consoleRequest, response)
                         {
                             this.alfLog('info', 'Request succeeded', response, consoleRequest);
+                            consoleRequest.endTime = consoleRequest.endTime || new Date();
+
                             if (consoleRequest.superseded !== true && consoleRequest.completed !== true)
                             {
                                 try
@@ -220,7 +224,7 @@ define(
                                     // stream)
                                     this.onExecuteInBackendCheckProgress(consoleRequest);
 
-                                    // TODO Handle execution stats
+                                    this._processExecutionStatistics(consoleRequest, response);
                                     this._runRequestLikeCrazy(consoleRequest);
                                     consoleRequest.completed = true;
                                     consoleRequest.checkTimer.remove();
@@ -239,6 +243,8 @@ define(
                                 consoleRequest, response)
                         {
                             this.alfLog('error', 'Request failed', response, consoleRequest);
+                            consoleRequest.endTime = consoleRequest.endTime || new Date();
+
                             if (consoleRequest.superseded !== true && consoleRequest.completed !== true)
                             {
                                 if (response.response && response.response.status !== 408 && response.response.data)
@@ -312,7 +318,7 @@ define(
                                         // TODO Handle potential error marks from execution error
                                     }
 
-                                    // TODO Handle execution stats
+                                    this._processExecutionStatistics(consoleRequest, response);
                                     this._runRequestLikeCrazy(consoleRequest);
                                     consoleRequest.completed = true;
                                     consoleRequest.checkTimer.remove();
@@ -339,6 +345,13 @@ define(
                                 consoleRequest, response)
                         {
                             this.alfLog('info', 'Progress check succeeded', response, consoleRequest);
+
+                            // if we had an error or entire web script is already done this will be the last update
+                            if (response.error === true || response.error === 'true' || lang.isString(response.webscriptPerf))
+                            {
+                                consoleRequest.endTime = consoleRequest.endTime || new Date();
+                            }
+
                             if (consoleRequest.superseded !== true)
                             {
                                 this.alfPublish(this.resetConsoleOutputTopic, {}, false, false, consoleRequest.alfResponseScope || '');
@@ -381,7 +394,7 @@ define(
                                             // TODO Handle potential error marks from execution error
                                         }
 
-                                        // TODO Handle execution stats
+                                        this._processExecutionStatistics(consoleRequest, response);
                                         this._runRequestLikeCrazy(consoleRequest);
                                         consoleRequest.completed = true;
                                         consoleRequest.checkTimer.remove();
@@ -418,6 +431,41 @@ define(
                                             this._activeRequestByScope[repeatConsoleRequest.alfResponseScope] = repeatConsoleRequest;
                                         }, consoleRequest), consoleRequest.runLikeCrazy);
                             }
+                        },
+
+                        _processExecutionStatistics : function jsconsole_backend_LegacyRepositoryConsoleBackend__processExecutionStatistics(
+                                consoleRequest, response)
+                        {
+                            var overallTime, jsTime, ftlTime, webScriptTime, overhead, networkTime;
+
+                            overallTime = consoleRequest.endTime.getTime() - consoleRequest.startTime.getTime();
+                            jsTime = parseInt(response.scriptPerf || '0', 10);
+                            ftlTime = parseInt(response.freemarkerPerf || '0', 10);
+                            webScriptTime = parseInt(response.webscriptPerf || '0', 10);
+                            overhead = webScriptTime - jsTime - ftlTime;
+                            networkTime = overallTime - webScriptTime;
+
+                            this.alfPublish(this.reportExecutionPerformanceTopic, {
+                                metrics : [ {
+                                    type : 'javaScriptTime',
+                                    value : jsTime
+                                }, {
+                                    type : 'freemarkerTime',
+                                    value : ftlTime
+                                }, {
+                                    type : 'overhead',
+                                    value : overhead
+                                }, {
+                                    type : 'webScriptTime',
+                                    value : webScriptTime
+                                }, {
+                                    type : 'network',
+                                    value : networkTime
+                                }, {
+                                    type : 'totalTime',
+                                    value : overallTime
+                                } ]
+                            }, false, false, consoleRequest.alfResponseScope || '');
                         }
 
                     });

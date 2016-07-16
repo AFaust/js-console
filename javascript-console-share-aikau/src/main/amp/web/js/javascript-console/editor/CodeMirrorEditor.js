@@ -2,7 +2,7 @@
  * This module defines a basic CodeMirror-backed editor for use in the JavaScript Console addon. It is partially based on the prototypical
  * alfresco/forms/controls/CodeMirrorEditor but since we don't need a form control it has no support fo it.
  * 
- * @module jsconsole/editors/CodeMirrorEditor
+ * @module jsconsole/editor/CodeMirrorEditor
  * @extends module:dijit/_WidgetBase
  * @mixes module:dijit/_TemplatedMixin
  * @mixes module:alfresco/core/Core
