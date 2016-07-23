@@ -108,6 +108,10 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         readOnly : false,
 
+        useLocalStorage : false,
+
+        localStorageKeyPrefix : null,
+
         updateContentTopic : null,
 
         clearContentTopic : null,
@@ -203,59 +207,118 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 this.editor.setValue(content);
                 delete this._lazyContent;
             }
+            else if (lang.isString(this._currentBackend) && this.useLocalStorage === true && lang.isString(this.localStorageKeyPrefix)
+                    && 'localStorage' in window && window.localStorage !== null)
+            {
+                this.editor.setValue(localStorage.getItem(this.localStorageKeyPrefix + '.' + this._currentBackend) || '');
+            }
+
+            if (lang.isString(this._currentBackend))
+            {
+                this._docsByBackend[this._currentBackend] = this.editor.getDoc();
+            }
         },
 
-        setEditorContent : function jsconsole_editors_CodeMirrorEditor__setEditorContent(content)
+        setEditorContent : function jsconsole_editors_CodeMirrorEditor__setEditorContent(backend, content)
         {
-            if (lang.isString(content))
+            var store;
+
+            if (lang.isString(backend) && lang.isString(content))
             {
-                if (this.editor !== undefined && this.editor !== null)
+                if (backend === this._currentBackend)
                 {
-                    if (this.editor.getValue() !== content)
+                    if (this.editor !== undefined && this.editor !== null)
                     {
-                        this.editor.setValue(content);
+                        if (this.editor.getValue() !== content)
+                        {
+                            this.editor.setValue(content);
+                        }
                     }
+                    else
+                    {
+                        this._lazyContent = content;
+                    }
+                    store = true;
                 }
-                else
+                else if (this._docsByBackend[backend] !== null)
                 {
-                    this._lazyContent = content;
+                    this._docsByBackend[backend].setValue(content);
+                    store = true;
+                }
+
+                if (store === true && this.useLocalStorage === true && lang.isString(this.localStorageKeyPrefix)
+                        && 'localStorage' in window && window.localStorage !== null)
+                {
+                    localStorage.setItem(this.localStorageKeyPrefix + '.' + backend, content);
                 }
             }
         },
 
         onEditorContentUpdateRequest : function jsconsole_editors_CodeMirrorEditor__onEditorContentUpdateRequest(payload)
         {
-            var content = lang.getObject('content', false, payload);
-            this.setEditorContent(content);
+            this.setEditorContent(payload.backend, payload.content);
         },
 
         onEditorContentClearRequest : function jsconsole_editors_CodeMirrorEditor__onEditorContentClearRequest(payload)
         {
-            this.setEditorContent('');
+            this.setEditorContent(payload.backend, '');
         },
 
         onEditorContentAppendRequest : function jsconsole_editors_CodeMirrorEditor__onEditorContentAppendRequest(payload)
         {
-            var content, lastLineNo, lastLine, lastCh;
+            var content, lastLineNo, lastLine, lastCh, store, fullContent;
 
+            backend = lang.getObject('backend', false, payload);
             content = lang.getObject('content', false, payload);
 
-            if (lang.isString(content))
+            if (lang.isString(backend) && lang.isString(content))
             {
-                if (this.editor !== undefined && this.editor !== null)
+                if (backend === this._currentBackend)
                 {
-                    lastLineNo = this.editor.lastLine();
-                    lastLine = this.editor.getLine(lastLineNo);
+                    if (this.editor !== undefined && this.editor !== null)
+                    {
+                        lastLineNo = this.editor.lastLine();
+                        lastLine = this.editor.getLine(lastLineNo);
+                        lastCh = lastLine.length;
+
+                        this.editor.replaceRange((lastCh !== 0 ? '\n' : '') + content, {
+                            line : lastLineNo,
+                            ch : lastCh
+                        });
+                        fullContent = this.editor.getValue();
+                    }
+                    else if (lang.isString(this._lazyContent))
+                    {
+                        this._lazyContent += '\n' + content;
+                        fullContent = this._lazyContent;
+                    }
+                    else
+                    {
+                        this._lazyContent = content;
+                        fullContent = this._lazyContent;
+                    }
+
+                    store = true;
+                }
+                else if (this._docsByBackend[backend] !== null)
+                {
+                    lastLineNo = this._docsByBackend[backend].lastLine();
+                    lastLine = this._docsByBackend[backend].getLine(lastLineNo);
                     lastCh = lastLine.length;
 
-                    this.editor.replaceRange((lastCh !== 0 ? '\n' : '') + content, {
+                    this._docsByBackend[backend].replaceRange((lastCh !== 0 ? '\n' : '') + content, {
                         line : lastLineNo,
                         ch : lastCh
-                    })
+                    });
+
+                    fullContent = this._docsByBackend[backend].getValue();
+                    store = true;
                 }
-                else if (lang.isString(this._lazyContent))
+
+                if (store === true && this.useLocalStorage === true && lang.isString(this.localStorageKeyPrefix)
+                        && 'localStorage' in window && window.localStorage !== null)
                 {
-                    this._lazyContent += '\n' + content;
+                    localStorage.setItem(this.localStorageKeyPrefix + '.' + backend, fullContent);
                 }
             }
         },
@@ -264,14 +327,21 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
         {
             var content, selectedContent;
 
+            content = this.editor.getValue()
             if (lang.isString(this.contentUpdatedTopic))
             {
-                content = this.editor.getValue()
                 selectedContent = this.editor.somethingSelected() ? this.editor.getSelection() : null;
                 this.alfPublish(this.contentUpdatedTopic, {
                     content : content,
                     selectedContent : selectedContent
                 });
+
+            }
+
+            if (lang.isString(this._currentBackend) && this.useLocalStorage === true && lang.isString(this.localStorageKeyPrefix)
+                    && 'localStorage' in window && window.localStorage !== null)
+            {
+                localStorage.setItem(this.localStorageKeyPrefix + '.' + this._currentBackend, content);
             }
         },
 
@@ -283,24 +353,66 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
             if (lang.isString(backend))
             {
-                if (this.editor !== undefined && this.editor !== null && lang.isString(this._currentBackend))
+                // check if swap or initial/repeated set
+                if (lang.isString(this._currentBackend) && this._currentBackend !== backend)
                 {
-                    if (this._docsByBackend.hasOwnProperty(backend))
+                    if (this.editor !== undefined && this.editor !== null)
                     {
-                        newDoc = this._docsByBackend[backend];
-                    }
-                    else
-                    {
-                        newDoc = new CodeMirror.Doc('', this.mode, 0);
-                        this._docsByBackend[backend] = newDoc;
-                    }
+                        if (this._docsByBackend.hasOwnProperty(backend))
+                        {
+                            newDoc = this._docsByBackend[backend];
+                        }
+                        else
+                        {
+                            newDoc = new CodeMirror.Doc('', this.mode, 0);
 
-                    oldDoc = this.editor.swapDoc(newDoc);
-                    if (!this._docsByBackend.hasOwnProperty(this._currentBackend))
+                            if (this.useLocalStorage === true && lang.isString(this.localStorageKeyPrefix) && 'localStorage' in window
+                                    && window.localStorage !== null)
+                            {
+                                newDoc.setValue(localStorage.getItem(this.localStorageKeyPrefix + '.' + backend) || '');
+                            }
+
+                            this._docsByBackend[backend] = newDoc;
+                        }
+
+                        oldDoc = this.editor.swapDoc(newDoc);
+                        // trigger appropriate update when current event cycle is complete
+                        setTimeout(lang.hitch(this, this.onEditorChange), 0);
+
+                        if (!this._docsByBackend.hasOwnProperty(this._currentBackend))
+                        {
+                            this._docsByBackend[this._currentBackend] = oldDoc;
+                        }
+                    }
+                    else if (!lang.isString(this._lazyContent) || this._lazyContent === '')
                     {
-                        this._docsByBackend[this._currentBackend] = oldDoc;
+                        if (this.useLocalStorage === true && lang.isString(this.localStorageKeyPrefix) && 'localStorage' in window
+                                && window.localStorage !== null)
+                        {
+                            this._lazyContent = localStorage.getItem(this.localStorageKeyPrefix + '.' + backend) || '';
+                        }
                     }
                 }
+                else
+                {
+                    if (this.editor !== undefined && this.editor !== null)
+                    {
+                        if (this.editor.getValue() === '' && this.useLocalStorage === true && lang.isString(this.localStorageKeyPrefix)
+                                && 'localStorage' in window && window.localStorage !== null)
+                        {
+                            this.editor.setValue(localStorage.getItem(this.localStorageKeyPrefix + '.' + backend) || '');
+                        }
+                    }
+                    else if (!lang.isString(this._lazyContent) || this._lazyContent === '')
+                    {
+                        if (this.useLocalStorage === true && lang.isString(this.localStorageKeyPrefix) && 'localStorage' in window
+                                && window.localStorage !== null)
+                        {
+                            this._lazyContent = localStorage.getItem(this.localStorageKeyPrefix + '.' + backend) || '';
+                        }
+                    }
+                }
+
                 this._currentBackend = backend;
             }
         },

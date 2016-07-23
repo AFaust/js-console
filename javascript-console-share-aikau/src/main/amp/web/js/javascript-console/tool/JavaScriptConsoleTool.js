@@ -56,7 +56,9 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 // autofocus is bad when used e.g. in AlfTabContainer
                 autofocus : false,
                 updateContentTopic : '{updateJavaScriptSourceTopic}',
-                contentUpdatedTopic : '{javaScriptSourceUpdatedTopic}'
+                contentUpdatedTopic : '{javaScriptSourceUpdatedTopic}',
+                useLocalStorage : true,
+                localStorageKeyPrefix : 'js-console.input.javascript'
             }
         }, {
             id : 'FTL-INPUT',
@@ -68,7 +70,9 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 // autofocus is bad when used e.g. in AlfTabContainer
                 autofocus : false,
                 updateContentTopic : '{updateFreemarkerSourceTopic}',
-                contentUpdatedTopic : '{freemarkerSourceUpdatedTopic}'
+                contentUpdatedTopic : '{freemarkerSourceUpdatedTopic}',
+                useLocalStorage : true,
+                localStorageKeyPrefix : 'js-console.input.freemarker'
             }
         }, {
             // TODO Make into a block of two alternative widgets (label for "no parameters" and form)
@@ -85,6 +89,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 waitForPageWidgets : false,
                 pubSubScope : '{executionParameterFormPubSubScope}',
                 autoSavePublishTopic : '{autoSaveExecutionParameterFormTopic}'
+            // TODO use localStorage to remember last parameters
             }
         } ],
 
@@ -539,7 +544,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         onExecutionParameterUpdate : function jsconsole_tool_JavaScriptConsoleTool__onExecutionParameterUpdate(payload)
         {
-            var executionParameter = lang.get('executionParameter', false, payload);
+            var executionParameter = lang.getObject('executionParameter', false, payload);
             this._executionParameterValuesByBackend[this._activeBackend] = executionParameter;
         }
     });

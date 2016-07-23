@@ -11,6 +11,10 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
 {
     return declare([ MenuBarPopup, _ConsoleTopicsMixin ], {
 
+        cssRequirements : [ {
+            cssFile : './css/CheckableBackendMenuBarPopup.css'
+        } ],
+
         widgets : [ {
             name : 'alfresco/header/AlfMenuItem',
             config : {
@@ -18,6 +22,8 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
                 label : 'loading.label'
             }
         } ],
+
+        additionalCssClasses : 'backend-selection',
 
         constructor : function jsconsole_menu_CheckableBackendMenuBarPopup__constructor()
         {
@@ -31,6 +37,7 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
             this.inherited(arguments);
 
             this.alfSubscribe(this.discoverBackendsTopic + '_SUCCESS', lang.hitch(this, this.onBackendDiscoveryResponse));
+            this.alfSubscribe(this.toggleActiveBackendTopic, lang.hitch(this, this.onToggleActiveBackendRequest));
         },
 
         onBackendDiscoveryResponse : function jsconsole_menu_CheckableBackendMenuBarPopup__onBackendDiscoveryResponse(payload)
@@ -48,6 +55,21 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
                     timeoutMs : 150,
                     func : lang.hitch(this, this._delayedMenuItemAddition)
                 });
+            }
+        },
+
+        onToggleActiveBackendRequest : function jsconsole_menu_CheckableBackendMenuBarPopup__onToggleActiveBackendRequest(payload)
+        {
+            if (lang.isString(payload.backend))
+            {
+                array.forEach(this._discoveredBackends,
+                        function jsconsole_menu_CheckableBackendMenuBarPopup__onToggleActiveBackendRequest_findDefinition(definition)
+                        {
+                            if (definition.backend === payload.backend)
+                            {
+                                this.set('label', this.message(definition.label));
+                            }
+                        }, this);
             }
         },
 

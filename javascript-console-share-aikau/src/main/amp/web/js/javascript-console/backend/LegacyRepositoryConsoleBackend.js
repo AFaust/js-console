@@ -27,6 +27,26 @@ define(
                         } ],
 
                         widgetsForExecutionParameterForm : [ {
+                            id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-DOCUMENT',
+                            name : 'alfresco/forms/controls/DocumentPicker',
+                            config : {
+                                additionalCssClasses : 'fixedWidth parameters-document',
+                                name : 'executionParameter.document',
+                                label : 'jsconsole.backend.repository.parameters.document.label',
+                                description : 'jsconsole.backend.repository.parameters.document.description',
+                                value : ''
+                            }
+                        }, {
+                            id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-SPACE',
+                            name : 'alfresco/forms/controls/ContainerPicker',
+                            config : {
+                                additionalCssClasses : 'fixedWidth parameters-space',
+                                name : 'executionParameter.space',
+                                label : 'jsconsole.backend.repository.parameters.space.label',
+                                description : 'jsconsole.backend.repository.parameters.space.description',
+                                value : ''
+                            }
+                        }, {
                             id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-URL_ARGUMENTS',
                             name : 'alfresco/forms/controls/TextBox',
                             config : {
@@ -94,13 +114,12 @@ define(
                                 value : '-1'
                             }
                         } ],
+                        
+                        backendId : 'legacyRepositoryConsole',
 
                         initService : function jsconsole_backend_LegacyRepositoryConsoleBackend__initService()
                         {
                             this.inherited(arguments);
-
-                            // generated ID to allow easy differentiation of backend services
-                            this.backendId = this.generateUuid();
 
                             // need to track requests by alfResponseScope
                             this._activeRequestByScope = {};
@@ -187,15 +206,19 @@ define(
                             {
                                 try
                                 {
-                                    this.alfPublish(this.resetConsoleOutputTopic, {}, false, false, consoleRequest.alfResponseScope || '');
+                                    this.alfPublish(this.resetConsoleOutputTopic, {
+                                        backend : this.backendId
+                                    }, false, false, consoleRequest.alfResponseScope || '');
 
                                     if (typeof response === 'string')
                                     {
                                         this.alfPublish(this.appendConsoleOutputTopic, {
+                                            backend : this.backendId,
                                             content : response
                                         }, false, false, consoleRequest.alfResponseScope || '');
 
                                         this.alfPublish(this.updateTemplateOutputTopic, {
+                                            backend : this.backendId,
                                             content : ''
                                         }, false, false, consoleRequest.alfResponseScope || '');
                                     }
@@ -203,19 +226,14 @@ define(
                                     {
                                         if (lang.isArray(response.printOutput))
                                         {
-                                            array
-                                                    .forEach(
-                                                            response.printOutput,
-                                                            function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendSuccess_handlePrintOutputLines(
-                                                                    line)
-                                                            {
-                                                                this.alfPublish(this.appendConsoleOutputTopic, {
-                                                                    content : line
-                                                                }, false, false, consoleRequest.alfResponseScope || '');
-                                                            }, this);
+                                            this.alfPublish(this.appendConsoleOutputTopic, {
+                                                backend : this.backendId,
+                                                content : response.printOutput.join('\n')
+                                            }, false, false, consoleRequest.alfResponseScope || '');
                                         }
 
                                         this.alfPublish(this.updateTemplateOutputTopic, {
+                                            backend : this.backendId,
                                             content : response.renderedTemplate || ''
                                         }, false, false, consoleRequest.alfResponseScope || '');
                                     }
@@ -262,11 +280,14 @@ define(
                                 if ((response.response && response.response.status !== 408)
                                         || (response.status !== undefined && response.status !== 408))
                                 {
-                                    this.alfPublish(this.resetConsoleOutputTopic, {}, false, false, consoleRequest.alfResponseScope || '');
+                                    this.alfPublish(this.resetConsoleOutputTopic, {
+                                        backend : this.backendId
+                                    }, false, false, consoleRequest.alfResponseScope || '');
 
                                     if (typeof response === 'string')
                                     {
                                         this.alfPublish(this.appendConsoleOutputTopic, {
+                                            backend : this.backendId,
                                             content : response
                                         }, false, false, consoleRequest.alfResponseScope || '');
                                     }
@@ -274,25 +295,21 @@ define(
                                     {
                                         if (lang.isArray(response.printOutput))
                                         {
-                                            array
-                                                    .forEach(
-                                                            response.printOutput,
-                                                            function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendCheckProgressSuccess_handlePrintOutputLines(
-                                                                    line)
-                                                            {
-                                                                this.alfPublish(this.appendConsoleOutputTopic, {
-                                                                    content : line
-                                                                }, false, false, consoleRequest.alfResponseScope || '');
-                                                            }, this);
+                                            this.alfPublish(this.appendConsoleOutputTopic, {
+                                                backend : this.backendId,
+                                                content : response.printOutput.join('\n')
+                                            }, false, false, consoleRequest.alfResponseScope || '');
                                         }
 
                                         if (response.status)
                                         {
                                             this.alfPublish(this.appendConsoleOutputTopic, {
+                                                backend : this.backendId,
                                                 content : response.status.code + ' ' + response.status.name
                                             }, false, false, consoleRequest.alfResponseScope || '');
 
                                             this.alfPublish(this.appendConsoleOutputTopic, {
+                                                backend : this.backendId,
                                                 content : response.status.description
                                             }, false, false, consoleRequest.alfResponseScope || '');
                                         }
@@ -300,6 +317,7 @@ define(
                                         if (lang.isString(response.message))
                                         {
                                             this.alfPublish(this.appendConsoleOutputTopic, {
+                                                backend : this.backendId,
                                                 content : response.message
                                             }, false, false, consoleRequest.alfResponseScope || '');
                                         }
@@ -307,10 +325,12 @@ define(
                                         if (lang.isString(response.callstack))
                                         {
                                             this.alfPublish(this.appendConsoleOutputTopic, {
+                                                backend : this.backendId,
                                                 content : '\nStacktrace-Details:'
                                             }, false, false, consoleRequest.alfResponseScope || '');
 
                                             this.alfPublish(this.appendConsoleOutputTopic, {
+                                                backend : this.backendId,
                                                 content : response.callstack
                                             }, false, false, consoleRequest.alfResponseScope || '');
                                         }
@@ -354,15 +374,19 @@ define(
 
                             if (consoleRequest.superseded !== true)
                             {
-                                this.alfPublish(this.resetConsoleOutputTopic, {}, false, false, consoleRequest.alfResponseScope || '');
+                                this.alfPublish(this.resetConsoleOutputTopic, {
+                                    backend : this.backendId
+                                }, false, false, consoleRequest.alfResponseScope || '');
 
                                 if (typeof response === 'string')
                                 {
                                     this.alfPublish(this.appendConsoleOutputTopic, {
+                                        backend : this.backendId,
                                         content : response
                                     }, false, false, consoleRequest.alfResponseScope || '');
 
                                     this.alfPublish(this.updateTemplateOutputTopic, {
+                                        backend : this.backendId,
                                         content : ''
                                     }, false, false, consoleRequest.alfResponseScope || '');
                                 }
@@ -370,22 +394,17 @@ define(
                                 {
                                     if (lang.isArray(response.printOutput))
                                     {
-                                        array
-                                                .forEach(
-                                                        response.printOutput,
-                                                        function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendCheckProgressSuccess_handlePrintOutputLines(
-                                                                line)
-                                                        {
-                                                            this.alfPublish(this.appendConsoleOutputTopic, {
-                                                                content : line
-                                                            }, false, false, consoleRequest.alfResponseScope || '');
-                                                        }, this);
+                                        this.alfPublish(this.appendConsoleOutputTopic, {
+                                            backend : this.backendId,
+                                            content : response.printOutput.join('\n')
+                                        }, false, false, consoleRequest.alfResponseScope || '');
                                     }
 
                                     // if we had an error or entire web script is already done this will be the last update
                                     if (response.error === true || response.error === 'true' || lang.isString(response.webscriptPerf))
                                     {
                                         this.alfPublish(this.updateTemplateOutputTopic, {
+                                            backend : this.backendId,
                                             content : response.renderedTemplate || ''
                                         }, false, false, consoleRequest.alfResponseScope || '');
 
@@ -446,6 +465,7 @@ define(
                             networkTime = overallTime - webScriptTime;
 
                             this.alfPublish(this.reportExecutionPerformanceTopic, {
+                                backend : this.backendId,
                                 metrics : [ {
                                     type : 'javaScriptTime',
                                     value : jsTime

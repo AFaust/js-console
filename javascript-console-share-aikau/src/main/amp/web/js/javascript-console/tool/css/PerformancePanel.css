@@ -1,19 +1,21 @@
 .jsconsole-tool-PerformancePanel {
-    > .metricContainer {
-        > .metricLabel {
-            min-width: 10em;
-            display: inline-block;
-        }
-        
-        > .metricValue {
-            min-width: 5em;
-            display: inline-block;
-            text-align: right;
-        }
-        
-        > .metricUnit {
-            padding-left: 1ex;
-            display: inline-block;
+    > .backendMetrics {
+        > .metricContainer {
+            > .metricLabel {
+                min-width: 10em;
+                display: inline-block;
+            }
+            
+            > .metricValue {
+                min-width: 5em;
+                display: inline-block;
+                text-align: right;
+            }
+            
+            > .metricUnit {
+                padding-left: 1ex;
+                display: inline-block;
+            }
         }
     }
 } 
