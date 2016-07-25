@@ -123,7 +123,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                     }
                 }, {
                     topic : '{autoSaveExecutionParameterFormTopic}',
-                    pubSubScope : '{executionParameterFormPubSubScope}',
+                    subscribeScope : '{executionParameterFormPubSubScope}',
                     dataMapping : {
                         executionParameter : 'executionParameter'
                     }
