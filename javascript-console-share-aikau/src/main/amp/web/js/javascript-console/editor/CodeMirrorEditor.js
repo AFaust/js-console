@@ -240,7 +240,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                     }
                     store = true;
                 }
-                else if (this._docsByBackend[backend] !== null)
+                else if (this._docsByBackend.hasOwnProperty(backend) && this._docsByBackend[backend] !== null)
                 {
                     this._docsByBackend[backend].setValue(content);
                     store = true;
@@ -300,7 +300,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
                     store = true;
                 }
-                else if (this._docsByBackend[backend] !== null)
+                else if (this._docsByBackend.hasOwnProperty(backend) && this._docsByBackend[backend] !== null)
                 {
                     lastLineNo = this._docsByBackend[backend].lastLine();
                     lastLine = this._docsByBackend[backend].getLine(lastLineNo);
@@ -401,6 +401,11 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                                 && 'localStorage' in window && window.localStorage !== null)
                         {
                             this.editor.setValue(localStorage.getItem(this.localStorageKeyPrefix + '.' + backend) || '');
+                        }
+
+                        if (!this._docsByBackend.hasOwnProperty(backend))
+                        {
+                            this._docsByBackend[backend] = this.editor.getDoc();
                         }
                     }
                     else if (!lang.isString(this._lazyContent) || this._lazyContent === '')
