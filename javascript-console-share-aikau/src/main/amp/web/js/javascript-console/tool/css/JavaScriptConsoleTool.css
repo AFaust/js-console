@@ -8,14 +8,16 @@
             /* hard-coded value is not very good style */
             height: calc(~"100% -" 27px);
             
-            > .dijitTabContainerTopChildWrapper,
-            .alfresco-layout-AlfTabContainer__OuterTab {
-                height: 100%;
-            }
-            
             .alfresco-layout-AlfTabContainer__OuterTab > *:first-child {
                 height: calc(~"100% -" @standard-line-height / 2);
-                margin-top: @standard-line-height / 2;
+                margin: @standard-line-height / 2 @standard-column-spacing 0 @standard-column-spacing;
+            }
+            
+            > .dijitTabContainerTopChildWrapper,
+            .alfresco-layout-AlfTabContainer__OuterTab,
+            .alfresco-layout-AlfTabContainer__OuterTab > .jsconsole-editors-CodeMirrorEditor:first-child {
+                height: 100%;
+                margin: 0;
             }
         }
     }

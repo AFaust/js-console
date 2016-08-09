@@ -5,6 +5,7 @@
             <dojo-pages>
                 <packages>
                     <package name="jsconsole" location="js/javascript-console" />
+                    <package name="acorn" location="js/lib/acorn" />
                 </packages>
             </dojo-pages>
         </web-framework>
