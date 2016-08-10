@@ -114,7 +114,7 @@ define(
                                 value : '-1'
                             }
                         } ],
-                        
+
                         backendId : 'legacyRepositoryConsole',
 
                         initService : function jsconsole_backend_LegacyRepositoryConsoleBackend__initService()
@@ -143,10 +143,63 @@ define(
                                         name : 'legacyRepositoryConsole',
                                         label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.label',
                                         description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.description',
+                                        isDefault : true,
                                         supports : [ 'javascriptSource', 'freemarkerSource', 'consoleOutput', 'templateOutput',
                                                 'performanceReport' ],
                                         executionParameterFormWidgets : lang.clone(this.widgetsForExecutionParameterForm)
                                     }, false, false, payload.alfResponseScope || '');
+
+                            this.serviceXhr({
+                                url : window.location.protocol + "//" + window.location.host + Constants.URL_SERVICECONTEXT
+                                        + 'javascript-console/type-definitions/index',
+                                method : 'GET',
+                                successCallback : lang.hitch(this, this.onLoadTypeDefinitionsSuccess, payload)
+                            });
+                        },
+
+                        onLoadTypeDefinitionsSuccess : function jsconsole_backend_LegacyRepositoryConsoleBackend__onLoadTypeDefinitionsSuccess(
+                                originalPayload, response)
+                        {
+                            if (lang.exists('!name', response))
+                            {
+                                // response is a single type definition
+                                this.alfPublish(this.javaScriptTypeDefinitionsLoadedTopic, {
+                                    backend : this.backendId,
+                                    additive : true,
+                                    javaScriptTypeDefinitions : [ response ]
+                                }, false, false, originalPayload.alfResponseScope || '');
+                            }
+                            else
+                            {
+                                if (response.hasOwnProperty('typeDefinitions') && lang.isArray(response['typeDefinitions']))
+                                {
+                                    this.alfPublish(this.javaScriptTypeDefinitionsLoadedTopic, {
+                                        backend : this.backendId,
+                                        additive : true,
+                                        javaScriptTypeDefinitions : response['typeDefinitions']
+                                    }, false, false, originalPayload.alfResponseScope || '');
+                                }
+
+                                if (response.hasOwnProperty('typeDefinitionUrls') && lang.isArray(response['typeDefinitionUrls']))
+                                {
+                                    array
+                                            .forEach(
+                                                    response['typeDefinitionUrls'],
+                                                    function jsconsole_backend_LegacyRepositoryConsoleBackend__onLoadTypeDefinitionsSuccess_loadEachUrl(
+                                                            url)
+                                                    {
+                                                        if (lang.isString(url))
+                                                        {
+                                                            this.serviceXhr({
+                                                                url : url,
+                                                                method : 'GET',
+                                                                successCallback : lang.hitch(this, this.onLoadTypeDefinitionsSuccess,
+                                                                        originalPayload)
+                                                            });
+                                                        }
+                                                    }, this);
+                                }
+                            }
                         },
 
                         onExecuteInBackendRequest : function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendRequest(

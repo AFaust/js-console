@@ -1,8 +1,6 @@
 model.jsonModel = {
-    services : [ 'jsconsole/backend/LegacyRepositoryConsoleBackend' ],
+    services : [ ],
     widgets : [ {
-        // TODO Report issue to Aikau team
-        // initialization order can result in SetTitle firing pubSub before Title is subscribed
         id : 'SET_PAGE_TITLE',
         name : 'alfresco/header/SetTitle',
         config : {

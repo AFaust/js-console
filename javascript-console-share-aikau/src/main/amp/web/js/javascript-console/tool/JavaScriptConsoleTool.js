@@ -57,6 +57,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 autofocus : false,
                 updateContentTopic : '{updateJavaScriptSourceTopic}',
                 contentUpdatedTopic : '{javaScriptSourceUpdatedTopic}',
+                typeDefinitionsLoadedTopic : '{javaScriptTypeDefinitionsLoadedTopic}',
                 useLocalStorage : true,
                 localStorageKeyPrefix : 'js-console.input.javascript'
             }

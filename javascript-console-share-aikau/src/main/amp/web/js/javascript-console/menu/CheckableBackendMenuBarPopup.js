@@ -2,14 +2,14 @@
  * This module provides the backend service implementation for the 'legacy' Repository-tier JavaScript Console.
  * 
  * @module jsconsole/menu/CheckableBackendMenuBarPopup
- * @extends module:alfresco/menus/AlfMenuBarPopup
+ * @extends module:alfresco/menus/AlfMenuBarSelect
  * @mixes module:jsconsole/_ConsoleTopicsMixin
  * @author Axel Faust
  */
-define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_ConsoleTopicsMixin', 'dojo/_base/lang', 'dojo/_base/array',
-        'alfresco/util/functionUtils' ], function(declare, MenuBarPopup, _ConsoleTopicsMixin, lang, array, functionUtils)
+define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarSelect', 'jsconsole/_ConsoleTopicsMixin', 'dojo/_base/lang', 'dojo/_base/array',
+        'alfresco/util/functionUtils' ], function(declare, MenuBarSelect, _ConsoleTopicsMixin, lang, array, functionUtils)
 {
-    return declare([ MenuBarPopup, _ConsoleTopicsMixin ], {
+    return declare([ MenuBarSelect, _ConsoleTopicsMixin ], {
 
         cssRequirements : [ {
             cssFile : './css/CheckableBackendMenuBarPopup.css'
@@ -30,6 +30,8 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
             this._discoveredBackends = [];
             this._recentlyDiscoveredBackends = [];
             this._firstItems = true;
+
+            this.selectionTopic = this.toggleActiveBackendTopic;
         },
 
         postCreate : function jsconsole_menu_CheckableBackendMenuBarPopup__postCreate()
@@ -37,7 +39,6 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
             this.inherited(arguments);
 
             this.alfSubscribe(this.discoverBackendsTopic + '_SUCCESS', lang.hitch(this, this.onBackendDiscoveryResponse));
-            this.alfSubscribe(this.toggleActiveBackendTopic, lang.hitch(this, this.onToggleActiveBackendRequest));
         },
 
         onBackendDiscoveryResponse : function jsconsole_menu_CheckableBackendMenuBarPopup__onBackendDiscoveryResponse(payload)
@@ -58,25 +59,11 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
             }
         },
 
-        onToggleActiveBackendRequest : function jsconsole_menu_CheckableBackendMenuBarPopup__onToggleActiveBackendRequest(payload)
-        {
-            if (lang.isString(payload.backend))
-            {
-                array.forEach(this._discoveredBackends,
-                        function jsconsole_menu_CheckableBackendMenuBarPopup__onToggleActiveBackendRequest_findDefinition(definition)
-                        {
-                            if (definition.backend === payload.backend)
-                            {
-                                this.set('label', this.message(definition.label));
-                            }
-                        }, this);
-            }
-        },
-
         _delayedMenuItemAddition : function jsconsole_menu_CheckableBackendMenuBarPopup___delayedMenuItemAddition()
         {
             var menuItemWidgets = [], cachedLabels = {};
 
+            // TODO Update hash with currently selected backend
             array.forEach(this._recentlyDiscoveredBackends,
                     function jsconsole_menu_CheckableBackendMenuBarPopup___delayedMenuItemAddition_setupBackendMenuItem(backendDefinition)
                     {
@@ -87,7 +74,7 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarPopup', 'jsconsole/_Con
                                 title : backendDefinition.description,
                                 group : this.id,
                                 value : backendDefinition.backend,
-                                checked : backendDefinition.isDefault,
+                                checked : backendDefinition.isDefault === true,
                                 publishTopic : this.toggleActiveBackendTopic,
                                 publishPayload : {
                                     backend : backendDefinition.backend

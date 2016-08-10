@@ -9,6 +9,8 @@ define([ 'dojo/_base/declare' ], function(declare)
     return declare([], {
 
         toggleActiveBackendTopic : 'JS_CONSOLE_TOGGLE_ACTIVE_BACKEND',
+        
+        javaScriptTypeDefinitionsLoadedTopic : 'JS_CONSOLE_JS_TYPE_DEFINITIONS_LOADED',
 
         updateJavaScriptSourceTopic : 'JS_CONSOLE_UPDATE_JS_SOURCE',
 
