@@ -74,7 +74,7 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarSelect', 'jsconsole/_Co
                                 title : backendDefinition.description,
                                 group : this.id,
                                 value : backendDefinition.backend,
-                                checked : backendDefinition.isDefault === true,
+                                checked : false,
                                 publishTopic : this.toggleActiveBackendTopic,
                                 publishPayload : {
                                     backend : backendDefinition.backend
@@ -103,6 +103,7 @@ define([ 'dojo/_base/declare', 'alfresco/menus/AlfMenuBarSelect', 'jsconsole/_Co
 
                 if (this._firstItems === true)
                 {
+                    menuItemWidgets[0].config.checked = true;
                     array.forEach(this.popup.getChildren(),
                             function jsconsole_menu_CheckableBackendMenuBarPopup___delayedMenuItemAddition_removeDummy(widget, index)
                             {

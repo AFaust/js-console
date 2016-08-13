@@ -143,7 +143,6 @@ define(
                                         name : 'legacyRepositoryConsole',
                                         label : 'jsconsole.backend.LegacyRepositoryConsoleBackend.label',
                                         description : 'jsconsole.backend.LegacyRepositoryConsoleBackend.description',
-                                        isDefault : true,
                                         supports : [ 'javascriptSource', 'freemarkerSource', 'consoleOutput', 'templateOutput',
                                                 'performanceReport' ],
                                         executionParameterFormWidgets : lang.clone(this.widgetsForExecutionParameterForm)
