@@ -16,14 +16,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.alfresco.processor.ProcessorExtension;
 import org.alfresco.repo.jscript.BaseScopableProcessorExtension;
 import org.alfresco.repo.jscript.NativeMap;
 import org.alfresco.repo.jscript.Scopeable;
+import org.alfresco.repo.jscript.ScriptLogger;
 import org.alfresco.repo.jscript.ScriptNode;
 import org.alfresco.repo.jscript.ScriptableHashMap;
+import org.alfresco.repo.jscript.ScriptableQNameMap;
 import org.alfresco.repo.processor.BaseProcessor;
 import org.alfresco.repo.processor.BaseProcessorExtension;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -51,8 +54,10 @@ import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.extensions.surf.util.I18NUtil;
 import org.springframework.extensions.webscripts.Cache;
 import org.springframework.extensions.webscripts.DeclarativeWebScript;
+import org.springframework.extensions.webscripts.ScriptableLinkedHashMap;
 import org.springframework.extensions.webscripts.ScriptableMap;
 import org.springframework.extensions.webscripts.Status;
+import org.springframework.extensions.webscripts.WebScript;
 import org.springframework.extensions.webscripts.WebScriptRequest;
 
 /**
@@ -65,10 +70,12 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
             short.class, int.class, long.class, float.class, double.class));
 
     private static final Collection<Class<?>> CUTOFF_CLASSES = Collections.unmodifiableList(Arrays.<Class<?>> asList(Object.class,
-            Scriptable.class, BaseProcessorExtension.class, BaseScopableProcessorExtension.class, ScriptableObject.class, List.class, Map.class));
+            Scriptable.class, org.springframework.extensions.webscripts.processor.BaseProcessorExtension.class,
+            BaseProcessorExtension.class, BaseScopableProcessorExtension.class, ScriptableObject.class, List.class, Map.class, Set.class));
 
     private static final Collection<Class<?>> CUTOFF_INTERFACES = Collections.unmodifiableList(Arrays.<Class<?>> asList(Scriptable.class,
-            Scopeable.class, ApplicationContextAware.class, InitializingBean.class, DisposableBean.class));
+            ProcessorExtension.class, org.springframework.extensions.surf.core.processor.ProcessorExtension.class, Scopeable.class,
+            ApplicationContextAware.class, InitializingBean.class, DisposableBean.class));
 
     private static final Collection<String> INIT_METHOD_NAMES = Collections.unmodifiableSet(new HashSet<String>(Arrays.<String> asList(
             "init", "register")));
@@ -176,26 +183,71 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
     {
         final Map<String, Object> model = new HashMap<String, Object>();
 
-        this.prepareJavaTypeDefinitions(model);
+        this.prepareCoreScriptAPIJavaTypeDefinitions(model);
+        this.prepareCoreScriptAPIGlobalDefinitions(model);
         this.preparePropertyDefinitions(model);
         // TODO Process action definitions + parameters
-        // this.prepareGlobalDefinitions(model);
+
+        this.prepareWebScriptAPIJavaTypeDefinitions(req, model);
+        this.prepareWebScriptAPIGlobalDefinitions(req, model);
 
         return model;
     }
 
-    protected void prepareJavaTypeDefinitions(final Map<String, Object> model)
+    protected void prepareCoreScriptAPIJavaTypeDefinitions(final Map<String, Object> model)
+    {
+        final Map<String, Object> scriptModel = this.buildScriptAPIModel();
+        model.put("scriptAPIJavaTypeDefinitions", this.prepareJavaTypeDefinitions(scriptModel));
+    }
+
+    protected void prepareWebScriptAPIJavaTypeDefinitions(final WebScriptRequest req, final Map<String, Object> model)
+    {
+        final ScriptDetails script = this.getExecuteScript(req.getContentType());
+        final Map<String, Object> scriptModel = this.createScriptParameters(req, null, script, Collections.<String, Object> emptyMap());
+
+        this.removeCoreScriptAPIGlobalsFromWebScriptAPI(scriptModel);
+
+        model.put("webScriptAPIJavaTypeDefinitions", this.prepareJavaTypeDefinitions(scriptModel));
+    }
+
+    protected void removeCoreScriptAPIGlobalsFromWebScriptAPI(final Map<String, Object> scriptModel)
+    {
+        // avoid unnecessary overlap between web script and standard script API model
+        // remove well known types handled in core script API
+        final Collection<String> keysToRemove = new HashSet<String>();
+        for (final Entry<String, Object> entry : scriptModel.entrySet())
+        {
+            final Object value = entry.getValue();
+            if (value instanceof ScriptNode || value instanceof NodeRef || value instanceof ScriptLogger)
+            {
+                keysToRemove.add(entry.getKey());
+            }
+        }
+    }
+
+    protected List<Map<String, Object>> prepareJavaTypeDefinitions(final Map<String, Object> model)
     {
         final List<Map<String, Object>> typeDefinitions = new ArrayList<Map<String, Object>>();
 
         final Collection<Class<?>> classesToDescribe = new HashSet<Class<?>>();
         final Collection<Class<?>> classesDescribed = new HashSet<Class<?>>();
 
-        classesToDescribe.addAll(Arrays.asList(String.class, Boolean.class, Number.class, Date.class));
-        final Map<String, Object> defaultModel = this.buildDefaultModel();
-        for (final Object value : defaultModel.values())
+        for (final Entry<String, Object> modelEntry : model.entrySet())
         {
-            classesToDescribe.add(value.getClass());
+            if (modelEntry.getValue() instanceof NodeRef)
+            {
+                modelEntry.setValue(new ScriptNode((NodeRef) modelEntry.getValue(), this.serviceRegistry));
+            }
+        }
+
+        classesToDescribe.addAll(Arrays.asList(String.class, Boolean.class, Number.class, Date.class));
+        for (final Entry<String, Object> globalEntry : model.entrySet())
+        {
+            final String globalPrefix = "global." + globalEntry.getKey();
+            final Class<?> realValueType = globalEntry.getValue().getClass();
+            Class<?> effectiveValueType = realValueType;
+            effectiveValueType = this.determineEffectiveType(realValueType, effectiveValueType, globalPrefix);
+            this.determineType(effectiveValueType, classesToDescribe);
         }
 
         while (classesToDescribe.size() > classesDescribed.size())
@@ -205,22 +257,105 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
 
             for (final Class<?> cls : remainingClasses)
             {
-                final String typeClsName = cls.getName();
-                final String typePrefix = "type." + typeClsName;
-                final String skip = this.properties.getProperty(typePrefix + ".skip");
-
-                if (skip == null || skip.isEmpty() || !Boolean.parseBoolean(skip))
+                if (!CUTOFF_CLASSES.contains(cls))
                 {
-                    final Map<String, Object> typeDefinition = new HashMap<String, Object>();
-                    final Collection<Class<?>> relatedClasses = this.fillClassTypeDefinition(cls, typeDefinition);
-                    classesToDescribe.addAll(relatedClasses);
-                    typeDefinitions.add(typeDefinition);
+                    final String typeClsName = cls.getName();
+                    final String typePrefix = "type." + typeClsName;
+                    final String skip = this.properties.getProperty(typePrefix + ".skip");
+
+                    if (skip == null || skip.isEmpty() || !Boolean.parseBoolean(skip))
+                    {
+                        final Map<String, Object> typeDefinition = new HashMap<String, Object>();
+                        final Collection<Class<?>> relatedClasses = this.fillClassTypeDefinition(cls, typeDefinition);
+                        classesToDescribe.addAll(relatedClasses);
+                        typeDefinitions.add(typeDefinition);
+                    }
                 }
                 classesDescribed.add(cls);
             }
         }
 
-        model.put("javaTypeDefinitions", typeDefinitions);
+        return typeDefinitions;
+    }
+
+    protected void prepareCoreScriptAPIGlobalDefinitions(final Map<String, Object> model)
+    {
+        final Map<String, Object> scriptModel = this.buildScriptAPIModel();
+        model.put("scriptAPIGlobalDefinitions", this.prepareGlobalDefinitions(scriptModel));
+    }
+
+    protected void prepareWebScriptAPIGlobalDefinitions(final WebScriptRequest req, final Map<String, Object> model)
+    {
+        final ScriptDetails script = this.getExecuteScript(req.getContentType());
+        final Map<String, Object> scriptModel = this.createScriptParameters(req, null, script, Collections.<String, Object> emptyMap());
+
+        this.removeCoreScriptAPIGlobalsFromWebScriptAPI(scriptModel);
+
+        model.put("webScriptAPIGlobalDefinitions", this.prepareGlobalDefinitions(scriptModel));
+    }
+
+    protected List<Map<String, Object>> prepareGlobalDefinitions(final Map<String, Object> model)
+    {
+        final List<Map<String, Object>> globalDefinitions = new ArrayList<Map<String, Object>>();
+
+        for (final Entry<String, Object> modelEntry : model.entrySet())
+        {
+            if (modelEntry.getValue() instanceof NodeRef)
+            {
+                modelEntry.setValue(new ScriptNode((NodeRef) modelEntry.getValue(), this.serviceRegistry));
+            }
+        }
+
+        final Collection<Class<?>> dummyClasses = new HashSet<Class<?>>();
+
+        for (final Entry<String, Object> globalEntry : model.entrySet())
+        {
+            final String globalPrefix = "global." + globalEntry.getKey();
+
+            final Map<String, Object> globalDefinition = new HashMap<String, Object>();
+            globalDefinition.put("name", globalEntry.getKey());
+
+            final Object value = globalEntry.getValue();
+            final Class<?> realValueType = value.getClass();
+            Class<?> effectiveValueType = realValueType;
+            effectiveValueType = this.determineEffectiveType(realValueType, effectiveValueType, globalPrefix);
+            final Class<?> valueType = this.determineType(effectiveValueType, dummyClasses);
+
+            String type = valueType.getSimpleName();
+
+            final String globalTernName = this.properties.getProperty(globalPrefix + ".ternName");
+            if (globalTernName != null && !globalTernName.isEmpty())
+            {
+                type = globalTernName;
+            }
+            else
+            {
+                final String clsName = valueType.getName();
+                final String typePrefix = "type." + clsName;
+                final String typeTernName = this.properties.getProperty(typePrefix + ".ternName");
+                if (typeTernName != null && !typeTernName.isEmpty())
+                {
+                    type = typeTernName;
+                }
+            }
+            globalDefinition.put("type", type);
+
+            // support I18n for any documentation
+            final String i18nKey = "javascript-console.tern." + globalPrefix + ".ternDoc";
+            String ternDoc = I18NUtil.getMessage(i18nKey);
+            if (ternDoc == null || ternDoc.isEmpty() || ternDoc.equals(i18nKey))
+            {
+                ternDoc = this.properties.getProperty(globalPrefix + ".ternDoc");
+            }
+            if (ternDoc != null && !ternDoc.isEmpty())
+            {
+                globalDefinition.put("doc", ternDoc);
+            }
+
+            globalDefinitions.add(globalDefinition);
+        }
+
+        return globalDefinitions;
     }
 
     protected Collection<Class<?>> fillClassTypeDefinition(final Class<?> cls, final Map<String, Object> typeDefinition)
@@ -353,6 +488,7 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
                 }
                 else
                 {
+                    memberDefinition.put("originalName", memberName);
                     memberDefinition.put("name", memberName + count.incrementAndGet());
                 }
             }
@@ -439,7 +575,8 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
             {
                 // ignore potential initialization setters / methods
                 final String methodName = method.getName();
-                if (BaseProcessorExtension.class.isAssignableFrom(method.getDeclaringClass())
+                if ((BaseProcessorExtension.class.isAssignableFrom(method.getDeclaringClass()) || WebScript.class.isAssignableFrom(method
+                        .getDeclaringClass()))
                         && (INIT_METHOD_NAMES.contains(methodName) || methodName.matches("^[sg]et[A-Z].+Service$") || (methodName
                                 .matches("^set[A-Z].+$") && method.getParameterTypes().length == 1)))
                 {
@@ -568,11 +705,6 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
             final String returnTypePrefix = "type." + returnTypeClsName;
 
             String returnTypeName = returnType.getSimpleName();
-            if (Object.class.equals(returnType))
-            {
-                returnTypeName = "+" + returnTypeName;
-            }
-
             final String propertyTypeTernName = this.properties.getProperty(propertyPrefix + ".typeTernName");
             if (propertyTypeTernName != null && !propertyTypeTernName.isEmpty())
             {
@@ -633,18 +765,25 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         return memberDefinition;
     }
 
-    protected Class<?> determineEffectiveType(final Class<?> realReturnType, final Class<?> baseEffectiveReturnType, final String prefix)
+    protected Class<?> determineEffectiveType(final Class<?> realType, final Class<?> baseEffectiveReturnType, final String prefix)
     {
-        Class<?> effectiveReturnType = baseEffectiveReturnType;
-        if (!(void.class.equals(realReturnType) || Void.class.equals(realReturnType)))
+        Class<?> effectiveType = baseEffectiveReturnType;
+
+        // implicit conversion in RhinoScriptProcessor$RhinoWrapFactory
+        if (Map.class.isAssignableFrom(realType) && !(ScriptableHashMap.class.isAssignableFrom(realType)))
+        {
+            effectiveType = NativeMap.class;
+        }
+
+        if (!(void.class.equals(realType) || Void.class.equals(realType)))
         {
             // due to bad return type in Java code we may need to specify overrides on a per-use-case level
-            final String returnTypeClassName = this.properties.getProperty(prefix + ".typeClassName");
-            if (returnTypeClassName != null && !returnTypeClassName.isEmpty())
+            final String typeClassName = this.properties.getProperty(prefix + ".typeClassName");
+            if (typeClassName != null && !typeClassName.isEmpty())
             {
                 try
                 {
-                    effectiveReturnType = Class.forName(returnTypeClassName);
+                    effectiveType = Class.forName(typeClassName);
                 }
                 catch (final ClassNotFoundException cnfex)
                 {
@@ -652,7 +791,7 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
                 }
             }
         }
-        return effectiveReturnType;
+        return effectiveType;
     }
 
     protected Class<?> determineType(final Class<?> inType, final Collection<Class<?>> relatedClasses)
@@ -698,13 +837,7 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
                 relatedClasses.add(type);
             }
         }
-        else if (ScriptableMap.class.isAssignableFrom(type) || NativeMap.class.isAssignableFrom(type)
-                || ScriptableHashMap.class.isAssignableFrom(type))
-        {
-            // treat as a common object
-            type = Object.class;
-        }
-        else if (Map.class.isAssignableFrom(type))
+        else if (Map.class.isAssignableFrom(type) && !Scriptable.class.isAssignableFrom(type))
         {
             type = Map.class;
             relatedClasses.add(type);
@@ -714,7 +847,16 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
             type = List.class;
             relatedClasses.add(type);
         }
-        else if (!(Scriptable.class.equals(type) || Object.class.equals(type) || void.class.equals(type) || Void.class.equals(type)))
+        else if (Set.class.isAssignableFrom(type))
+        {
+            type = Set.class;
+            relatedClasses.add(type);
+        }
+        else if (!(Scriptable.class.equals(type) || Object.class.equals(type) || void.class.equals(type) || Void.class.equals(type)
+                || NativeMap.class.isAssignableFrom(type)
+                || org.springframework.extensions.webscripts.NativeMap.class.isAssignableFrom(type)
+                || ScriptableMap.class.isAssignableFrom(type) || ScriptableHashMap.class.isAssignableFrom(type)
+                || ScriptableQNameMap.class.isAssignableFrom(type) || ScriptableLinkedHashMap.class.isAssignableFrom(type)))
         {
             relatedClasses.add(type);
         }
@@ -860,20 +1002,12 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         return methodType;
     }
 
-    protected Map<String, Object> buildDefaultModel()
+    protected Map<String, Object> buildScriptAPIModel()
     {
         final String userName = AuthenticationUtil.getFullyAuthenticatedUser();
         final NodeRef person = this.personService.getPerson(userName);
         // the specific values of companyHome, userHome, script, document and space are irrelevant for type analysis
         final Map<String, Object> defaultModel = this.scriptService.buildDefaultModel(person, person, person, person, person, person);
-
-        for (final Entry<String, Object> modelEntry : defaultModel.entrySet())
-        {
-            if (modelEntry.getValue() instanceof NodeRef)
-            {
-                modelEntry.setValue(new ScriptNode((NodeRef) modelEntry.getValue(), this.serviceRegistry));
-            }
-        }
 
         final Collection<ProcessorExtension> processorExtensions = this.scriptProcessor.getProcessorExtensions();
         for (final ProcessorExtension extension : processorExtensions)

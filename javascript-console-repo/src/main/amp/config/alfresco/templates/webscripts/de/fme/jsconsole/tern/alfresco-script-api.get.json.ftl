@@ -4,15 +4,41 @@
         {
             "!name" : "alfresco-script-api",
             "!define" : {
-                <@renderJavaTypes />
-                <@renderPropertyTypes />
-            }
+                <@renderJavaTypes scriptAPIJavaTypeDefinitions/><#if scriptAPIJavaTypeDefinitions?? && scriptAPIJavaTypeDefinitions?size &gt; 0>,</#if>
+                <@renderPropertyTypes />,
+                <#-- we fake this type for Search.queryResultSet (would just be plain object else) -->
+                "SearchResultSetMeta" : {
+                    "!type" : "object",
+                    "nodes" : "[ScriptNode]",
+                    "meta" : "JavaMap"
+                    <#-- we could add all the metadata collected in latest Alfresco version as sub-structure but then it might not match Alfresco version in use -->
+                }
+            }<#if scriptAPIGlobalDefinitions?? && scriptAPIGlobalDefinitions?size &gt; 0>,</#if>
+            <@renderGlobals scriptAPIGlobalDefinitions />
+        },
+        {
+            "!name" : "alfresco-web-script-api",
+            "!define" : {
+                <@renderJavaTypes webScriptAPIJavaTypeDefinitions/>
+            }<#if webScriptAPIGlobalDefinitions?? && webScriptAPIGlobalDefinitions?size &gt; 0>,</#if>
+            <@renderGlobals webScriptAPIGlobalDefinitions />
         }
         </@>
     ]
 }</#escape>
 
-<#macro renderJavaTypes><#compress><#escape x as jsonUtils.encodeJSONString(x)>
+<#macro renderGlobals globals><#compress><#escape x as jsonUtils.encodeJSONString(x)>
+<#list globals as globalDefinition>
+    "${globalDefinition.name}" : {
+        <#if globalDefinition.doc??>
+        "!doc" : "${globalDefinition.doc}",
+        </#if>
+        "!type" : "${globalDefinition.type}"
+    }<#if globalDefinition_has_next>,</#if>
+</#list>
+</#escape></#compress></#macro>
+
+<#macro renderJavaTypes javaTypeDefinitions><#compress><#escape x as jsonUtils.encodeJSONString(x)>
 <#list javaTypeDefinitions as javaTypeDefinition>
     "${javaTypeDefinition.name}" : {
         <#if javaTypeDefinition.doc??>
@@ -27,6 +53,9 @@
         <#if javaTypeDefinition.members??>
             <#list javaTypeDefinition.members as memberDefinition>
             "${memberDefinition.name}" : {
+                <#if memberDefinition.originalName??>
+                "!original" : "${memberDefinition.originalName}",
+                </#if>
                 <#if memberDefinition.doc??>
                 "!doc" : "<#if memberDefinition.readOnly??>${memberDefinition.readOnly?string('(read-only)', '(read-write)')} </#if>${memberDefinition.doc}",
                 <#elseif memberDefinition.readOnly??>
@@ -39,7 +68,7 @@
             }<#if memberDefinition_has_next>,</#if>
             </#list>
         </#if>
-    },
+    }<#if javaTypeDefinition_has_next>,</#if>
 </#list>
 </#escape></#compress></#macro>
 
