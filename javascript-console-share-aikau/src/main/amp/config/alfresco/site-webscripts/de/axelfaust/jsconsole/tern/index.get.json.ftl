@@ -7,8 +7,6 @@
         <@markup id="typeDefinitionUrls">
         "${url.server}${url.context}/res/js/javascript-console/tern/defs/ecma5.json",
         "${url.server}${url.context}/proxy/alfresco/tern-definitions/alfresco-script-api",
-        <#-- TODO Include web script type definitions in alfresco-script-api -->
-        "${url.server}${url.context}/res/js/javascript-console/tern/defs/alfresco-webscripts.json",
         "${url.server}${url.context}/res/js/javascript-console/tern/defs/alfresco-batchprocessing.json"
         </@>
     ]
