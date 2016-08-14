@@ -8,7 +8,6 @@
                 <@renderPropertyTypes />,
                 <#-- we fake this type for Search.queryResultSet (would just be plain object else) -->
                 "SearchResultSetMeta" : {
-                    "!type" : "object",
                     "nodes" : "[ScriptNode]",
                     "meta" : "JavaMap"
                     <#-- we could add all the metadata collected in latest Alfresco version as sub-structure but then it might not match Alfresco version in use -->
@@ -31,9 +30,11 @@
 <#list globals as globalDefinition>
     "${globalDefinition.name}" : {
         <#if globalDefinition.doc??>
-        "!doc" : "${globalDefinition.doc}",
+        "!doc" : "${globalDefinition.doc}"<#if globalDefinition.type != 'object'>,</#if>
         </#if>
+        <#if globalDefinition.type != 'object'>
         "!type" : "${globalDefinition.type}"
+        </#if>
     }<#if globalDefinition_has_next>,</#if>
 </#list>
 </#escape></#compress></#macro>

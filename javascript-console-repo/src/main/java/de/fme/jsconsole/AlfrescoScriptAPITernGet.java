@@ -244,10 +244,14 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         for (final Entry<String, Object> globalEntry : model.entrySet())
         {
             final String globalPrefix = "global." + globalEntry.getKey();
-            final Class<?> realValueType = globalEntry.getValue().getClass();
-            Class<?> effectiveValueType = realValueType;
-            effectiveValueType = this.determineEffectiveType(realValueType, effectiveValueType, globalPrefix);
-            this.determineType(effectiveValueType, classesToDescribe);
+            final String skip = this.properties.getProperty(globalPrefix + ".skip");
+            if (skip == null || skip.isEmpty() || !Boolean.parseBoolean(skip))
+            {
+                final Class<?> realValueType = globalEntry.getValue().getClass();
+                Class<?> effectiveValueType = realValueType;
+                effectiveValueType = this.determineEffectiveType(realValueType, effectiveValueType, globalPrefix);
+                this.determineType(effectiveValueType, classesToDescribe);
+            }
         }
 
         while (classesToDescribe.size() > classesDescribed.size())
@@ -312,47 +316,51 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         {
             final String globalPrefix = "global." + globalEntry.getKey();
 
-            final Map<String, Object> globalDefinition = new HashMap<String, Object>();
-            globalDefinition.put("name", globalEntry.getKey());
-
-            final Object value = globalEntry.getValue();
-            final Class<?> realValueType = value.getClass();
-            Class<?> effectiveValueType = realValueType;
-            effectiveValueType = this.determineEffectiveType(realValueType, effectiveValueType, globalPrefix);
-            final Class<?> valueType = this.determineType(effectiveValueType, dummyClasses);
-
-            String type = valueType.getSimpleName();
-
-            final String globalTernName = this.properties.getProperty(globalPrefix + ".ternName");
-            if (globalTernName != null && !globalTernName.isEmpty())
+            final String skip = this.properties.getProperty(globalPrefix + ".skip");
+            if (skip == null || skip.isEmpty() || !Boolean.parseBoolean(skip))
             {
-                type = globalTernName;
-            }
-            else
-            {
-                final String clsName = valueType.getName();
-                final String typePrefix = "type." + clsName;
-                final String typeTernName = this.properties.getProperty(typePrefix + ".ternName");
-                if (typeTernName != null && !typeTernName.isEmpty())
+                final Map<String, Object> globalDefinition = new HashMap<String, Object>();
+                globalDefinition.put("name", globalEntry.getKey());
+
+                final Object value = globalEntry.getValue();
+                final Class<?> realValueType = value.getClass();
+                Class<?> effectiveValueType = realValueType;
+                effectiveValueType = this.determineEffectiveType(realValueType, effectiveValueType, globalPrefix);
+                final Class<?> valueType = this.determineType(effectiveValueType, dummyClasses);
+
+                String type = valueType.getSimpleName();
+
+                final String globalTernName = this.properties.getProperty(globalPrefix + ".ternName");
+                if (globalTernName != null && !globalTernName.isEmpty())
                 {
-                    type = typeTernName;
+                    type = globalTernName;
                 }
-            }
-            globalDefinition.put("type", type);
+                else
+                {
+                    final String clsName = valueType.getName();
+                    final String typePrefix = "type." + clsName;
+                    final String typeTernName = this.properties.getProperty(typePrefix + ".ternName");
+                    if (typeTernName != null && !typeTernName.isEmpty())
+                    {
+                        type = typeTernName;
+                    }
+                }
+                globalDefinition.put("type", type);
 
-            // support I18n for any documentation
-            final String i18nKey = "javascript-console.tern." + globalPrefix + ".ternDoc";
-            String ternDoc = I18NUtil.getMessage(i18nKey);
-            if (ternDoc == null || ternDoc.isEmpty() || ternDoc.equals(i18nKey))
-            {
-                ternDoc = this.properties.getProperty(globalPrefix + ".ternDoc");
-            }
-            if (ternDoc != null && !ternDoc.isEmpty())
-            {
-                globalDefinition.put("doc", ternDoc);
-            }
+                // support I18n for any documentation
+                final String i18nKey = "javascript-console.tern." + globalPrefix + ".ternDoc";
+                String ternDoc = I18NUtil.getMessage(i18nKey);
+                if (ternDoc == null || ternDoc.isEmpty() || ternDoc.equals(i18nKey))
+                {
+                    ternDoc = this.properties.getProperty(globalPrefix + ".ternDoc");
+                }
+                if (ternDoc != null && !ternDoc.isEmpty())
+                {
+                    globalDefinition.put("doc", ternDoc);
+                }
 
-            globalDefinitions.add(globalDefinition);
+                globalDefinitions.add(globalDefinition);
+            }
         }
 
         return globalDefinitions;
@@ -813,6 +821,10 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         {
             type = Date.class;
         }
+        else if (CharSequence.class.equals(type))
+        {
+            type = String.class;
+        }
         else if (type.isArray())
         {
             type = type.getComponentType();
@@ -831,6 +843,10 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
             else if (Date.class.isAssignableFrom(type))
             {
                 type = Date.class;
+            }
+            else if (CharSequence.class.equals(type))
+            {
+                type = String.class;
             }
             else
             {
