@@ -194,12 +194,26 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         return model;
     }
 
+    /**
+     * Prepares the type definitions for the core script API of Alfresco (common across all use cases)
+     *
+     * @param model
+     *            the current web script model into which to insert the definitions
+     */
     protected void prepareCoreScriptAPIJavaTypeDefinitions(final Map<String, Object> model)
     {
         final Map<String, Object> scriptModel = this.buildScriptAPIModel();
         model.put("scriptAPIJavaTypeDefinitions", this.prepareJavaTypeDefinitions(scriptModel));
     }
 
+    /**
+     * Prepares the type definitions for the script API specific to Alfresco web scripts
+     *
+     * @param req
+     *            the current web script request
+     * @param model
+     *            the current web script model into which to insert the definitions
+     */
     protected void prepareWebScriptAPIJavaTypeDefinitions(final WebScriptRequest req, final Map<String, Object> model)
     {
         final ScriptDetails script = this.getExecuteScript(req.getContentType());
@@ -210,6 +224,12 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         model.put("webScriptAPIJavaTypeDefinitions", this.prepareJavaTypeDefinitions(scriptModel));
     }
 
+    /**
+     * Removes core script API globals from a script model specific to web script execution
+     *
+     * @param scriptModel
+     *            the script model of a web script
+     */
     protected void removeCoreScriptAPIGlobalsFromWebScriptAPI(final Map<String, Object> scriptModel)
     {
         // avoid unnecessary overlap between web script and standard script API model
@@ -225,6 +245,13 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         }
     }
 
+    /**
+     * Prepares the type definitions for Java classes found in a specific model.
+     *
+     * @param model
+     *            the model containing objects exposed to scripts
+     * @return the list of models for each type found directly or transitively (via public properties / methods) in the model elements
+     */
     protected List<Map<String, Object>> prepareJavaTypeDefinitions(final Map<String, Object> model)
     {
         final List<Map<String, Object>> typeDefinitions = new ArrayList<Map<String, Object>>();
@@ -282,12 +309,26 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         return typeDefinitions;
     }
 
+    /**
+     * Prepares the definitions for global / root scope objects found in the core script API model (common across all use cases)
+     *
+     * @param model
+     *            the model into which to insert the global definitions
+     */
     protected void prepareCoreScriptAPIGlobalDefinitions(final Map<String, Object> model)
     {
         final Map<String, Object> scriptModel = this.buildScriptAPIModel();
         model.put("scriptAPIGlobalDefinitions", this.prepareGlobalDefinitions(scriptModel));
     }
 
+    /**
+     * Prepares the definitions for global / root scope objects found in the script API model specific to Alfresco web scripts
+     *
+     * @param req
+     *            the current web script request
+     * @param model
+     *            the model into which to insert the global definitions
+     */
     protected void prepareWebScriptAPIGlobalDefinitions(final WebScriptRequest req, final Map<String, Object> model)
     {
         final ScriptDetails script = this.getExecuteScript(req.getContentType());
@@ -298,6 +339,13 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         model.put("webScriptAPIGlobalDefinitions", this.prepareGlobalDefinitions(scriptModel));
     }
 
+    /**
+     * Prepares the global definitions for Java objects found in a specific model.
+     *
+     * @param model
+     *            the model containing objects exposed to scripts
+     * @return the list of models for each global value
+     */
     protected List<Map<String, Object>> prepareGlobalDefinitions(final Map<String, Object> model)
     {
         final List<Map<String, Object>> globalDefinitions = new ArrayList<Map<String, Object>>();
@@ -1037,6 +1085,13 @@ public class AlfrescoScriptAPITernGet extends DeclarativeWebScript implements In
         return defaultModel;
     }
 
+    /**
+     * Prepares the definitions of node and task properties based on the {@link DictionaryService dictionary} active in the current context
+     * (authentication / tenant)
+     *
+     * @param model
+     *            the model into which to insert the definitions
+     */
     protected void preparePropertyDefinitions(final Map<String, Object> model)
     {
         final Collection<QName> taskTypes = this.dictionaryService.getSubTypes(WorkflowModel.TYPE_TASK, true);
