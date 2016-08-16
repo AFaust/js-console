@@ -1312,7 +1312,7 @@
         if (pName == "<i>" || method.kind == "set") {
           target = ANull
         } else {
-          target = (method.static ? fn : proto).defProp(pName, method.key)
+          target = (method['static'] ? fn : proto).defProp(pName, method.key)
           target.initializer = true
           if (method.kind == "get") target = new IsCallee(inst, [], null, target)
         }
