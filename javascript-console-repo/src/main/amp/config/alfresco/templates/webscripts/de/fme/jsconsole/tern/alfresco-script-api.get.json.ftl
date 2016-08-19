@@ -1,6 +1,5 @@
 <#escape x as jsonUtils.encodeJSONString(x)>{
     "typeDefinitions" : [
-        <@markup id="typeDefinitions">
         {
             "!name" : "alfresco-script-api",
             "!define" : {
@@ -22,7 +21,6 @@
             }<#if webScriptAPIGlobalDefinitions?? && webScriptAPIGlobalDefinitions?size &gt; 0>,</#if>
             <@renderGlobals webScriptAPIGlobalDefinitions />
         }
-        </@>
     ]
 }</#escape>
 
