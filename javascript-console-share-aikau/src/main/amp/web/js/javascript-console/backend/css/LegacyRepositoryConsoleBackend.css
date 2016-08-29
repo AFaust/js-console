@@ -2,6 +2,7 @@
     .jsconsole-tool-JavaScriptConsoleTool--parameterForm > form {
         > .alfresco-forms-controls-BaseFormControl {
             display: inline-block;
+            vertical-align: top;
             margin-right: 2 * @standard-column-spacing;
             
             &.parameters-urlArguments > .control-row > .control {

@@ -28,13 +28,79 @@ define(
 
                         widgetsForExecutionParameterForm : [ {
                             id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-DOCUMENT',
-                            name : 'alfresco/forms/controls/DocumentPicker',
+                            name : 'alfresco/forms/controls/FilePicker',
                             config : {
                                 additionalCssClasses : 'fixedWidth parameters-document',
                                 name : 'executionParameter.document',
                                 label : 'jsconsole.backend.repository.parameters.document.label',
                                 description : 'jsconsole.backend.repository.parameters.document.description',
-                                value : ''
+                                value : '',
+                                // FilePicker default selected items view is just too massive
+                                widgetsForSelectedFilesView : [ {
+                                    id : "{id}_SELECTED_FILES_VIEW",
+                                    name : "alfresco/lists/views/AlfListView",
+                                    config : {
+                                        noItemsMessage : "filepicker.noitems.message",
+                                        currentData : {
+                                            items : "{selectedFiles}"
+                                        },
+                                        widgets : [ {
+                                            name : "alfresco/lists/views/layouts/Row",
+                                            config : {
+                                                widgets : [ {
+                                                    name : "alfresco/lists/views/layouts/Cell",
+                                                    config : {
+                                                        width : "20px",
+                                                        widgets : [ {
+                                                            id : "{id}_SELECTED_FILES_THUMBNAIL",
+                                                            name : "alfresco/search/SearchThumbnail",
+                                                            config : {
+                                                                width : "16px",
+                                                                showDocumentPreview : true
+                                                            }
+                                                        } ]
+                                                    }
+                                                }, {
+                                                    name : "alfresco/lists/views/layouts/Cell",
+                                                    config : {
+                                                        widgets : [ {
+                                                            id : "{id}_SELECTED_FILES_NAME",
+                                                            name : "alfresco/renderers/Property",
+                                                            config : {
+                                                                propertyToRender : "displayName",
+                                                                renderSize : "small"
+                                                            }
+                                                        }, {
+                                                            id : "{id}_SELECTED_FILES_TITLE",
+                                                            name : "alfresco/renderers/Property",
+                                                            config : {
+                                                                propertyToRender : "title",
+                                                                renderSize : "small",
+                                                                renderedValuePrefix : "(",
+                                                                renderedValueSuffix : ")"
+                                                            }
+                                                        } ]
+                                                    }
+                                                }, {
+                                                    name : "alfresco/lists/views/layouts/Cell",
+                                                    config : {
+                                                        width : "20px",
+                                                        widgets : [ {
+                                                            id : "{id}_SELECTED_FILES_REMOVE",
+                                                            name : "alfresco/renderers/PublishAction",
+                                                            config : {
+                                                                iconClass : "delete-16",
+                                                                publishTopic : "{removeFileTopic}",
+                                                                publishPayloadType : "CURRENT_ITEM",
+                                                                publishGlobal : true
+                                                            }
+                                                        } ]
+                                                    }
+                                                } ]
+                                            }
+                                        } ]
+                                    }
+                                } ]
                             }
                         }, {
                             id : 'LEGACY_REPOSITORY_CONSOLE_BACKEND-SPACE',
@@ -204,7 +270,7 @@ define(
                         onExecuteInBackendRequest : function jsconsole_backend_LegacyRepositoryConsoleBackend__onExecuteInBackendRequest(
                                 payload)
                         {
-                            var rqData, consoleRequest;
+                            var rqData, consoleRequest, documentNodeRef, spaceNodeRef;
                             if (payload !== undefined && payload !== null)
                             {
                                 if (payload.backend === this.backendId)
@@ -217,6 +283,18 @@ define(
                                         runas : lang.getObject('executionParameter.runAs', false, payload) || Constants.USERNAME,
                                         urlargs : lang.getObject('executionParameter.urlArguments', false, payload) || ''
                                     };
+
+                                    documentNodeRef = lang.getObject('executionParameter.document', false, payload) || null;
+                                    if (typeof documentNodeRef === 'string')
+                                    {
+                                        rqData.documentNodeRef = documentNodeRef;
+                                    }
+
+                                    spaceNodeRef = lang.getObject('executionParameter.space', false, payload) || null;
+                                    if (typeof spaceNodeRef === 'string')
+                                    {
+                                        rqData.spaceNodeRef = spaceNodeRef;
+                                    }
 
                                     consoleRequest = {
                                         data : rqData,
