@@ -199,7 +199,12 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             var editorConfig = this.buildEditorConfig();
 
             this.editor = CodeMirror.fromTextArea(this.editorNode, editorConfig);
+            // change should catch all content changes
+            // swapDoc is only for change of backends (which are isolated documents)
+            // cursorActivity will also catch content changes but is primarily meant to handle selection changes
             this.editor.on('change', lang.hitch(this, this.onEditorChange));
+            this.editor.on('swapDoc', lang.hitch(this, this.onEditorChangeDelayed));
+            this.editor.on('cursorActivity', lang.hitch(this, this.onEditorChange));
             this.editor.setSize(null, '100%');
 
             if (lang.isString(this._lazyContent))
@@ -323,6 +328,11 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             }
         },
 
+        onEditorChangeDelayed : function jsconsole_editors_CodeMirrorEditor__onEditorChangeDelayed()
+        {
+            setTimeout(lang.hitch(this, this.onEditorChange, Array.prototype.slice.call(arguments, 0)), 0);
+        },
+
         onEditorChange : function jsconsole_editors_CodeMirrorEditor__onEditorChange(editor, changeObject)
         {
             var content, selectedContent;
@@ -376,8 +386,6 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                         }
 
                         oldDoc = this.editor.swapDoc(newDoc);
-                        // trigger appropriate update when current event cycle is complete
-                        setTimeout(lang.hitch(this, this.onEditorChange), 0);
 
                         if (!this._docsByBackend.hasOwnProperty(this._currentBackend))
                         {
