@@ -271,58 +271,55 @@ define(
                                 payload)
                         {
                             var rqData, consoleRequest, documentNodeRef, spaceNodeRef;
-                            if (payload !== undefined && payload !== null)
+                            if (payload !== undefined && payload !== null && payload.backend === this.backendId)
                             {
-                                if (payload.backend === this.backendId)
+                                rqData = {
+                                    script : payload.selectedJavaScriptSource || payload.javaScriptSource || '',
+                                    template : payload.freemarkerSource,
+                                    resultChannel : this.generateUuid(),
+                                    transaction : lang.getObject('executionParameter.isolation', false, payload) || 'readwrite',
+                                    runas : lang.getObject('executionParameter.runAs', false, payload) || Constants.USERNAME,
+                                    urlargs : lang.getObject('executionParameter.urlArguments', false, payload) || ''
+                                };
+
+                                documentNodeRef = lang.getObject('executionParameter.document', false, payload) || null;
+                                if (typeof documentNodeRef === 'string')
                                 {
-                                    rqData = {
-                                        script : payload.selectedJavaScriptSource || payload.javaScriptSource || '',
-                                        template : payload.freemarkerSource,
-                                        resultChannel : this.generateUuid(),
-                                        transaction : lang.getObject('executionParameter.isolation', false, payload) || 'readwrite',
-                                        runas : lang.getObject('executionParameter.runAs', false, payload) || Constants.USERNAME,
-                                        urlargs : lang.getObject('executionParameter.urlArguments', false, payload) || ''
-                                    };
-
-                                    documentNodeRef = lang.getObject('executionParameter.document', false, payload) || null;
-                                    if (typeof documentNodeRef === 'string')
-                                    {
-                                        rqData.documentNodeRef = documentNodeRef;
-                                    }
-
-                                    spaceNodeRef = lang.getObject('executionParameter.space', false, payload) || null;
-                                    if (typeof spaceNodeRef === 'string')
-                                    {
-                                        rqData.spaceNodeRef = spaceNodeRef;
-                                    }
-
-                                    consoleRequest = {
-                                        data : rqData,
-                                        alfResponseScope : payload.alfResponseScope,
-                                        startTime : new Date(),
-                                        runLikeCrazy : parseInt(lang.getObject('executionParameter.runLikeCrazy', false, payload) || '-1',
-                                                10)
-                                    };
-
-                                    this.serviceXhr({
-                                        url : Constants.PROXY_URI + 'de/fme/jsconsole/execute',
-                                        data : rqData,
-                                        method : 'POST',
-                                        successCallback : lang.hitch(this, this.onExecuteInBackendSuccess, consoleRequest),
-                                        failureCallback : lang.hitch(this, this.onExecuteInBackendFailure, consoleRequest)
-                                    });
-
-                                    consoleRequest.checkTimer = functionUtils.addRepeatingFunction(lang.hitch(this,
-                                            this.onExecuteInBackendCheckProgress, consoleRequest), 'MEDIUM');
-                                    this._activeRequestByScope[consoleRequest.alfResponseScope] = consoleRequest;
+                                    rqData.documentNodeRef = documentNodeRef;
                                 }
-                                else if (this._activeRequestByScope.hasOwnProperty(payload.alfResponseScope))
+
+                                spaceNodeRef = lang.getObject('executionParameter.space', false, payload) || null;
+                                if (typeof spaceNodeRef === 'string')
+                                {
+                                    rqData.spaceNodeRef = spaceNodeRef;
+                                }
+
+                                if (this._activeRequestByScope.hasOwnProperty(payload.alfResponseScope))
                                 {
                                     consoleRequest = this._activeRequestByScope[payload.alfResponseScope];
                                     consoleRequest.superseded = true;
                                     consoleRequest.checkTimer.remove();
                                     delete this._activeRequestByScope[consoleRequest.alfResponseScope];
                                 }
+
+                                consoleRequest = {
+                                    data : rqData,
+                                    alfResponseScope : payload.alfResponseScope,
+                                    startTime : new Date(),
+                                    runLikeCrazy : parseInt(lang.getObject('executionParameter.runLikeCrazy', false, payload) || '-1', 10)
+                                };
+
+                                this.serviceXhr({
+                                    url : Constants.PROXY_URI + 'de/fme/jsconsole/execute',
+                                    data : rqData,
+                                    method : 'POST',
+                                    successCallback : lang.hitch(this, this.onExecuteInBackendSuccess, consoleRequest),
+                                    failureCallback : lang.hitch(this, this.onExecuteInBackendFailure, consoleRequest)
+                                });
+
+                                consoleRequest.checkTimer = functionUtils.addRepeatingFunction(lang.hitch(this,
+                                        this.onExecuteInBackendCheckProgress, consoleRequest), 'MEDIUM');
+                                this._activeRequestByScope[consoleRequest.alfResponseScope] = consoleRequest;
                             }
                         },
 
