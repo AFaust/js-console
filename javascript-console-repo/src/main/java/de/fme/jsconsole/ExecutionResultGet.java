@@ -12,6 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.extensions.webscripts.AbstractWebScript;
+import org.springframework.extensions.webscripts.Cache;
 import org.springframework.extensions.webscripts.Status;
 import org.springframework.extensions.webscripts.WebScriptException;
 import org.springframework.extensions.webscripts.WebScriptRequest;
@@ -20,7 +21,7 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 /**
  * Web script to retrieve the result of a web script execution or - in case the web script has not run to completion yet - the intermediary
  * log output.
- * 
+ *
  * @author Axel Faust, <a href="http://www.prodyna.com">PRODYNA AG</a>
  */
 public class ExecutionResultGet extends AbstractWebScript implements InitializingBean
@@ -31,7 +32,7 @@ public class ExecutionResultGet extends AbstractWebScript implements Initializin
     private SimpleCache<String, JavascriptConsoleResultBase> resultCache;
 
     /**
-     * 
+     *
      * {@inheritDoc}
      */
     @Override
@@ -54,23 +55,22 @@ public class ExecutionResultGet extends AbstractWebScript implements Initializin
      * @param resultCache
      *            the resultCache to set
      */
-    public final void setResultCache(SimpleCache<String, JavascriptConsoleResultBase> resultCache)
+    public final void setResultCache(final SimpleCache<String, JavascriptConsoleResultBase> resultCache)
     {
         this.resultCache = resultCache;
     }
 
     /**
-     * 
+     *
      * {@inheritDoc}
      */
     @Override
-    public void execute(WebScriptRequest request, WebScriptResponse response) throws IOException
+    public void execute(final WebScriptRequest request, final WebScriptResponse response) throws IOException
     {
         final String resultChannel = request.getServiceMatch().getTemplateVars().get("resultChannel");
 
         if (resultChannel != null && resultChannel.trim().length() > 0)
         {
-
             final JavascriptConsoleResultBase result = this.resultCache.get(resultChannel);
             final List<String> printOutput = new ArrayList<String>();
             try
@@ -88,10 +88,13 @@ public class ExecutionResultGet extends AbstractWebScript implements Initializin
                         break;
                     }
                 }
-
             }
             finally
             {
+                final Cache cache = new Cache();
+                cache.setNeverCache(true);
+                response.setCache(cache);
+
                 if (result != null)
                 {
                     // check for dummy errpr result
@@ -102,14 +105,14 @@ public class ExecutionResultGet extends AbstractWebScript implements Initializin
 
                         try
                         {
-                            JSONObject jsonOutput = new JSONObject();
+                            final JSONObject jsonOutput = new JSONObject();
                             jsonOutput.put("printOutput", printOutput);
                             jsonOutput.put("error", Boolean.TRUE);
 
                             response.getWriter().write(jsonOutput.toString());
 
                         }
-                        catch (JSONException e)
+                        catch (final JSONException e)
                         {
                             throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, "Error writing json response.", e);
                         }
@@ -141,13 +144,13 @@ public class ExecutionResultGet extends AbstractWebScript implements Initializin
 
                     try
                     {
-                        JSONObject jsonOutput = new JSONObject();
+                        final JSONObject jsonOutput = new JSONObject();
                         jsonOutput.put("printOutput", printOutput);
 
                         response.getWriter().write(jsonOutput.toString());
 
                     }
-                    catch (JSONException e)
+                    catch (final JSONException e)
                     {
                         throw new WebScriptException(Status.STATUS_INTERNAL_SERVER_ERROR, "Error writing json response.", e);
                     }
