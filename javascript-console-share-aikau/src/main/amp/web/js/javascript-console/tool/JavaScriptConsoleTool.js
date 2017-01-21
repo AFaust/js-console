@@ -8,17 +8,28 @@
  * @mixes module:alfresco/core/Core
  * @mixes module:alfresco/core/ResizeMixin
  * @mixes module:alfresco/core/ObjectProcessingMixin
+ * @mixes module:alfresco/core/WidgetsOverrideMixin
  * @mixes module:jsconsole/_ConsoleTopicsMixin
+ * @requires module:dojo/_base/declare
+ * @requires module:dojo/_base/lang
+ * @requires module:dojo/_base/array
+ * @requires module:dojo/dom-class
+ * @requires module:dojo/dom-style
+ * @requires module:dojo/dom-geometry
+ * @requires module:dojo/query
+ * @requires module:dojo/window
+ * @requires module:alfresco/util/functionUtils
  * @author Axel Faust
  */
 define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'alfresco/core/Core', 'alfresco/core/CoreWidgetProcessing',
-        'alfresco/core/ResizeMixin', 'alfresco/core/ObjectProcessingMixin', 'jsconsole/_ConsoleTopicsMixin',
-        'dojo/text!./templates/JavaScriptConsoleTool.html', 'dojo/_base/lang', 'dojo/_base/array', 'dojo/dom-class', 'dojo/dom-style',
-        'dojo/dom-geometry', 'dojo/query', 'dojo/window', 'alfresco/util/functionUtils' ], function(declare, _Widget, _Templated, Core,
-        CoreWidgetProcessing, ResizeMixin, ObjectProcessingMixin, _ConsoleTopicsMixin, template, lang, array, domClass, domStyle, domGeom,
-        query, win, functionUtils)
+        'alfresco/core/ResizeMixin', 'alfresco/core/ObjectProcessingMixin', 'alfresco/core/WidgetsOverrideMixin',
+        'jsconsole/_ConsoleTopicsMixin', 'dojo/text!./templates/JavaScriptConsoleTool.html', 'dojo/_base/lang', 'dojo/_base/array',
+        'dojo/dom-class', 'dojo/dom-style', 'dojo/dom-geometry', 'dojo/query', 'dojo/window', 'alfresco/util/functionUtils' ], function(
+        declare, _Widget, _Templated, Core, CoreWidgetProcessing, ResizeMixin, ObjectProcessingMixin, WidgetsOverrideMixin,
+        _ConsoleTopicsMixin, template, lang, array, domClass, domStyle, domGeom, query, win, functionUtils)
 {
-    return declare([ _Widget, _Templated, Core, CoreWidgetProcessing, ResizeMixin, ObjectProcessingMixin, _ConsoleTopicsMixin ], {
+    return declare([ _Widget, _Templated, Core, CoreWidgetProcessing, ResizeMixin, ObjectProcessingMixin, WidgetsOverrideMixin,
+            _ConsoleTopicsMixin ], {
 
         templateString : template,
 
@@ -32,7 +43,9 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         restrictToPageHeight : true,
 
-        widgetsForDefaultMenuBar : [ {
+        widgetsForMenuBarOverrides : null,
+
+        widgetsForMenuBar : [ {
             id : 'BACKEND_SELECTION',
             name : 'jsconsole/menu/CheckableBackendMenuBarPopup',
             config : {
@@ -43,10 +56,11 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
         // TODO CodeMirror theme selection
         ],
 
-        widgetsForMenuBar : null,
-
         // TODO Need explicit focus grant for editor in first visible tab
-        widgetsForDefaultInputTabs : [ {
+
+        widgetsForInputTabsOverrides : null,
+
+        widgetsForInputTabs : [ {
             id : 'JS-INPUT',
             name : 'jsconsole/editor/JavaScriptEditor',
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.jsInput.title',
@@ -55,6 +69,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--javascriptEditor',
                 // autofocus is bad when used e.g. in AlfTabContainer
                 autofocus : false,
+                placeholder : '{jsconsole.tool.JavaScriptConsoleTool.tab.jsInput.placeholder}',
                 updateContentTopic : '{updateJavaScriptSourceTopic}',
                 contentUpdatedTopic : '{javaScriptSourceUpdatedTopic}',
                 typeDefinitionsLoadedTopic : '{javaScriptTypeDefinitionsLoadedTopic}',
@@ -70,6 +85,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--freemarkerEditor',
                 // autofocus is bad when used e.g. in AlfTabContainer
                 autofocus : false,
+                placeholder : '{jsconsole.tool.JavaScriptConsoleTool.tab.ftlInput.placeholder}',
                 updateContentTopic : '{updateFreemarkerSourceTopic}',
                 contentUpdatedTopic : '{freemarkerSourceUpdatedTopic}',
                 useLocalStorage : true,
@@ -94,9 +110,9 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             }
         } ],
 
-        widgetsForInputTabs : null,
+        widgetsForButtonsOverrides : null,
 
-        widgetsForDefaultButtons : [ {
+        widgetsForButtons : [ {
             id : 'EXECUTE_BUTTON',
             name : 'jsconsole/button/DynamicPayloadButton',
             config : {
@@ -134,9 +150,9 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
             }
         } ],
 
-        widgetsForButtons : null,
+        widgetsForOutputTabsOverrides : null,
 
-        widgetsForDefaultOutputTabs : [ {
+        widgetsForOutputTabs : [ {
             id : 'CONSOLE-OUTPUT',
             name : 'jsconsole/editor/CodeMirrorEditor',
             title : 'jsconsole.tool.JavaScriptConsoleTool.tab.consoleOutput.title',
@@ -145,6 +161,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--consoleOutput',
                 readOnly : true,
                 autofocus : false,
+                placeholder : '{jsconsole.tool.JavaScriptConsoleTool.tab.consoleOutput.placeholder}',
                 clearContentTopic : '{resetConsoleOutputTopic}',
                 appendContentTopic : '{appendConsoleOutputTopic}'
             }
@@ -157,6 +174,7 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--templateOutput',
                 readOnly : true,
                 autofocus : false,
+                placeholder : '{jsconsole.tool.JavaScriptConsoleTool.tab.textOutput.placeholder}',
                 updateContentTopic : '{updateTemplateOutputTopic}'
             }
         }, {
@@ -169,8 +187,6 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 additionalCssClasses : 'jsconsole-tool-JavaScriptConsoleTool--performanceReport'
             }
         } ],
-
-        widgetsForOutputTabs : null,
 
         executionParameterFormPubSubScope : null,
 
@@ -270,13 +286,14 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
         {
             var menuBarWidgets;
 
-            menuBarWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultMenuBar, this.widgetsForMenuBar);
-            if (lang.isArray(menuBarWidgets) && menuBarWidgets.length > 0)
+            this.applyWidgetOverrides(this.widgetsForMenuBar, this.widgetsForMenuBarOverrides);
+            if (lang.isArray(this.widgetsForMenuBar) && this.widgetsForMenuBar.length > 0)
             {
+                this.processObject([ 'replaceTopicTokens', 'replacePubSubScopeTokens', 'processMessageTokens' ], this.widgetsForMenuBar);
                 menuBarWidgets = [ {
                     name : 'alfresco/menus/AlfMenuBar',
                     config : {
-                        widgets : menuBarWidgets
+                        widgets : this.widgetsForMenuBar
                     }
                 } ];
                 this.processWidgets(menuBarWidgets, this.consoleMenuBarNode, 'createConsoleMenuBar');
@@ -291,16 +308,17 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
         {
             var inputWidgets;
 
-            inputWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultInputTabs, this.widgetsForInputTabs);
-            if (lang.isArray(inputWidgets) && inputWidgets.length > 0)
+            this.applyWidgetOverrides(this.widgetsForInputTabs, this.widgetsForInputTabsOverrides);
+            if (lang.isArray(this.widgetsForInputTabs) && this.widgetsForInputTabs.length > 0)
             {
-                array.forEach(inputWidgets, collectTabSupportRequirements, this);
+                this.processObject([ 'replaceTopicTokens', 'replacePubSubScopeTokens', 'processMessageTokens' ], this.widgetsForInputTabs);
+                array.forEach(this.widgetsForInputTabs, collectTabSupportRequirements, this);
 
                 inputWidgets = [ {
                     name : 'alfresco/layout/AlfTabContainer',
                     config : {
                         tabDisablementTopic : 'JS_CONSOLE_DISABLE_TAB',
-                        widgets : inputWidgets
+                        widgets : this.widgetsForInputTabs
                     }
                 } ];
 
@@ -314,12 +332,11 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
 
         _setupButtons : function jsconsole_tool_JavaScriptConsoleTool__setupButtons()
         {
-            var buttonWidgets;
-
-            buttonWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultButtons, this.widgetsForButtons);
-            if (lang.isArray(buttonWidgets) && buttonWidgets.length > 0)
+            this.applyWidgetOverrides(this.widgetsForButtons, this.widgetsForButtonsOverrides);
+            if (lang.isArray(this.widgetsForButtons) && this.widgetsForButtons.length > 0)
             {
-                this.processWidgets(buttonWidgets, this.consoleButtonsNode, 'createButtons');
+                this.processObject([ 'replaceTopicTokens', 'replacePubSubScopeTokens', 'processMessageTokens' ], this.widgetsForButtons);
+                this.processWidgets(this.widgetsForButtons, this.consoleButtonsNode, 'createButtons');
             }
             else
             {
@@ -331,16 +348,17 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
         {
             var outputWidgets;
 
-            outputWidgets = this.processWidgetsWithDefaults(this.widgetsForDefaultOutputTabs, this.widgetsForOutputTabs);
-            if (lang.isArray(outputWidgets) && outputWidgets.length > 0)
+            this.applyWidgetOverrides(this.widgetsForOutputTabs, this.widgetsForOutputTabsOverrides);
+            if (lang.isArray(this.widgetsForOutputTabs) && this.widgetsForOutputTabs.length > 0)
             {
-                array.forEach(outputWidgets, collectTabSupportRequirements, this);
+                this.processObject([ 'replaceTopicTokens', 'replacePubSubScopeTokens', 'processMessageTokens' ], this.widgetsForOutputTabs);
+                array.forEach(this.widgetsForOutputTabs, collectTabSupportRequirements, this);
 
                 outputWidgets = [ {
                     name : 'alfresco/layout/AlfTabContainer',
                     config : {
                         tabDisablementTopic : 'JS_CONSOLE_DISABLE_TAB',
-                        widgets : outputWidgets
+                        widgets : this.widgetsForOutputTabs
                     }
                 } ];
 
@@ -365,74 +383,6 @@ define([ 'dojo/_base/declare', 'dijit/_WidgetBase', 'dijit/_TemplatedMixin', 'al
                 height : 'calc(' + (winBox.h - this._footerHeight - position.y) + 'px - 1em)'
             });
             domClass.remove(this.domNode, 'share-hidden');
-        },
-
-        processWidgetsWithDefaults : function jsconsole_tool_JavaScriptConsoleTool__processWidgetsWithDefaults(defaultWidgets,
-                configuredWidgets)
-        {
-            var widgetsToCreate, defaultWidgetsById;
-
-            defaultWidgetsById = {};
-
-            if (lang.isArray(defaultWidgets))
-            {
-                widgetsToCreate = [];
-                array.forEach(defaultWidgets,
-                        function jsconsole_tool_JavaScriptConsoleTool__processWidgetsWithDefaults_forEachDefaultWidget(defaultWidget)
-                        {
-                            var widget;
-                            if (defaultWidget !== undefined && defaultWidget !== null
-                                    && Object.prototype.toString.call(defaultWidget) === '[object Object]'
-                                    && lang.isString(defaultWidget.id))
-                            {
-                                widget = lang.clone(defaultWidget);
-                                widgetsToCreate.push(widget);
-                                defaultWidgetsById[defaultWidget.id] = widget;
-                            }
-                        }, this);
-            }
-
-            if (lang.isArray(configuredWidgets))
-            {
-                // re-initialize (drops default widgets)
-                widgetsToCreate = [];
-                array.forEach(configuredWidgets,
-                        function jsconsole_tool_JavaScriptConsoleTool__processWidgetsWithDefaults_forEachConfiguredWidget(configuredWidget)
-                        {
-                            var widgetId, widget, config;
-
-                            if (configuredWidget !== undefined && configuredWidget !== null
-                                    && Object.prototype.toString.call(configuredWidget) === '[object Object]')
-                            {
-                                widgetId = configuredWidget.id;
-                                if (lang.isString(widgetId) && defaultWidgetsById.hasOwnProperty(widgetId))
-                                {
-                                    widget = lang.clone(defaultWidgetsById[widgetId]);
-                                    config = widget.config || {};
-
-                                    config = lang.mixin(config, configuredWidget.config || {});
-
-                                    delete widget.config;
-                                    widget = lang.mixin(widget, configuredWidget);
-                                    widget.config = config;
-                                }
-                                else
-                                {
-                                    widget = configuredWidget;
-                                }
-
-                                if (lang.isString(widget.name))
-                                {
-                                    widgetsToCreate.push(widget);
-                                }
-                            }
-
-                        }, this);
-            }
-
-            this.processObject([ 'replaceTopicTokens', 'replacePubSubScopeTokens' ], widgetsToCreate);
-
-            return widgetsToCreate;
         },
 
         replacePubSubScopeTokens : function jsconsole_tool_JavaScriptConsoleTool__replacePubSubScopeTokens(v)
