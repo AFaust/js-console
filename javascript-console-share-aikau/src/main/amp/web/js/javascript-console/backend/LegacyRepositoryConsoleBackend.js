@@ -274,21 +274,33 @@ define(
                             if (payload !== undefined && payload !== null && payload.backend === this.backendId)
                             {
                                 rqData = {
-                                    script : payload.selectedJavaScriptSource || payload.javaScriptSource || '',
-                                    template : payload.freemarkerSource,
                                     resultChannel : this.generateUuid(),
                                     transaction : lang.getObject('executionParameter.isolation', false, payload) || 'readwrite',
                                     runas : lang.getObject('executionParameter.runAs', false, payload) || Constants.USERNAME,
                                     urlargs : lang.getObject('executionParameter.urlArguments', false, payload) || ''
                                 };
 
-                                documentNodeRef = lang.getObject('executionParameter.document', false, payload) || null;
+                                if (payload.selectedJavaScriptSource || payload.javaScriptSource)
+                                {
+                                    rqData.script = payload.selectedJavaScriptSource || payload.javaScriptSource;
+                                }
+
+                                if (payload.freemarkerSource)
+                                {
+                                    rqData.template = payload.freemarkerSource;
+                                }
+
+                                // document may be provided as list of selections
+                                documentNodeRef = lang.getObject('executionParameter.document', false, payload)
+                                        || lang.getObject('executionParameter.document.0', false, payload) || null;
                                 if (typeof documentNodeRef === 'string')
                                 {
                                     rqData.documentNodeRef = documentNodeRef;
                                 }
 
-                                spaceNodeRef = lang.getObject('executionParameter.space', false, payload) || null;
+                                // space may be provided as list of selections
+                                spaceNodeRef = lang.getObject('executionParameter.space', false, payload)
+                                        || lang.getObject('executionParameter.space.0', false, payload) || null;
                                 if (typeof spaceNodeRef === 'string')
                                 {
                                     rqData.spaceNodeRef = spaceNodeRef;
